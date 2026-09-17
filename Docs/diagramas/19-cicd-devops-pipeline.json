@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Pipeline de Integración y Despliegue Continuo (CI/CD DevOps)",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "view-pipeline-all",
+        "label": "Pipeline Integral de Producción",
+        "focus": ["git_push", "ci_trigger", "typecheck", "build_front", "build_back", "sec_audit", "docker_build", "cloud_run", "health_check"],
+        "note": "Flujo de automatización completo desde el commit de código hasta la verificación en Cloud Run."
+      },
+      {
+        "id": "view-ci-gate",
+        "label": "Filtros Fail-Fast y QA",
+        "focus": ["ci_trigger", "typecheck", "build_front", "build_back", "sec_audit"],
+        "note": "Aislamiento de compilación estricta y bloqueo ante errores de tipado o vulnerabilidades."
+      }
+    ],
+    "output": "19-cicd-devops-pipeline.html"
+  },
+  "lanes": [
+    { "id": "vcs", "label": "Control de Versiones (GitOps)" },
+    { "id": "ci", "label": "Integración Continua (Build & QA)" },
+    { "id": "security", "label": "Auditoría de Seguridad (SAST)" },
+    { "id": "cd", "label": "Despliegue Continuo (Cloud Run)" }
+  ],
+  "phases": [
+    { "id": "phase-intake-qa", "label": "Disparo y Análisis Estático", "fromCol": 0, "toCol": 1 },
+    { "id": "phase-bundling", "label": "Compilación y Auditoría", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "phase-deploy", "label": "Empaquetado y Publicación", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "grp-build", "label": "Compilación Dual", "lane": "ci", "fromCol": 1, "toCol": 3, "variant": "emphasis" },
+    { "id": "grp-cd", "label": "Despliegue Seguro", "lane": "cd", "fromCol": 4, "toCol": 5, "variant": "security" }
+  ],
+  "mainPath": [
+    "git_push",
+    "ci_trigger",
+    "typecheck",
+    "build_front",
+    "build_back",
+    "sec_audit",
+    "docker_build",
+    "cloud_run",
+    "health_check"
+  ],
+  "nodes": [
+    { "id": "git_push", "lane": "vcs", "col": 0, "type": "frontend", "label": "Git Push", "sublabel": "Rama main / tag", "width": 140 },
+    { "id": "ci_trigger", "lane": "ci", "col": 0, "type": "backend", "label": "Webhook CI", "sublabel": "Runner automatizado", "tag": "Disparador", "width": 140 },
+
+    { "id": "typecheck", "lane": "ci", "col": 1, "type": "backend", "label": "tsc --noEmit", "sublabel": "Tipado estricto TS 5.5", "tag": "Fail-Fast", "width": 140 },
+
+    { "id": "build_front", "lane": "ci", "col": 2, "type": "frontend", "label": "vite build", "sublabel": "Chunks + Pre-cache SW", "tag": "Workbox", "width": 140 },
+    { "id": "build_back", "lane": "ci", "col": 3, "type": "backend", "label": "esbuild server", "sublabel": "dist/server.cjs único", "width": 140 },
+    { "id": "sec_audit", "lane": "security", "col": 3, "type": "security", "label": "npm audit SAST", "sublabel": "Escaneo de dependencias", "tag": "CVE Check", "width": 140 },
+
+    { "id": "docker_build", "lane": "cd", "col": 4, "type": "cloud", "label": "Docker Build", "sublabel": "Imagen OCI multi-stage", "tag": "Distroless", "width": 140 },
+    { "id": "cloud_run", "lane": "cd", "col": 5, "type": "cloud", "label": "Cloud Run Deploy", "sublabel": "Contenedor :3000", "tag": "TLS 1.3", "width": 140 },
+    { "id": "health_check", "lane": "vcs", "col": 5, "type": "frontend", "label": "Health Check", "sublabel": "GET /api/health 200", "tag": "Green State", "width": 140 }
+  ],
+  "edges": [
+    { "id": "e-push-trigger", "from": "git_push", "to": "ci_trigger", "variant": "default" },
+    { "id": "e-trigger-typecheck", "from": "ci_trigger", "to": "typecheck", "label": "inicia runner", "variant": "emphasis" },
+    { "id": "e-typecheck-front", "from": "typecheck", "to": "build_front", "label": "0 errores", "variant": "emphasis" },
+    { "id": "e-front-back", "from": "build_front", "to": "build_back", "variant": "default" },
+    { "id": "e-back-sec", "from": "build_back", "to": "sec_audit", "variant": "default" },
+    { "id": "e-sec-docker", "from": "sec_audit", "to": "docker_build", "label": "sin CVEs", "variant": "emphasis" },
+    { "id": "e-docker-run", "from": "docker_build", "to": "cloud_run", "label": "imagen lista", "variant": "emphasis" },
+    { "id": "e-run-health", "from": "cloud_run", "to": "health_check", "label": "200 OK", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Compilación y Verificación de Tipos Estricta",
+      "items": [
+        "Regla Fail-Fast: Cualquier discrepancia en firmas de funciones o interfaces detiene la ejecución",
+        "Empaquetado optimizado mediante Vite con división inteligente de chunks y pre-caché Workbox"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Despliegue Automatizado Inmutable",
+      "items": [
+        "Construcción de contenedor Docker multi-stage con base mínima y libre de herramientas de compilación",
+        "Despliegue sin tiempo de inactividad a Google Cloud Run con validación activa de sondeo de salud"
+      ]
+    }
+  ]
+}

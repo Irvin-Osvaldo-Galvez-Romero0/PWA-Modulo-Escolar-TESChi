@@ -1,0 +1,6 @@
+{
+  "name": "Módulo Auxiliar de Servicios Escolares TESChi",
+  "description": "Sistema multiplataforma institucional (PWA, Desktop, Mobile) para trámites académicos, reinscripciones, kardex y gestión de servicios escolares del TESChi bajo normas ISO y alta seguridad.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

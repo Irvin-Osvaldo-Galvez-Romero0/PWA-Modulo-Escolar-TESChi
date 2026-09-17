@@ -1,0 +1,102 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Diagrama de Flujo de Pantallas y Navegación de la SPA (Wireflow)",
+    "animation": "trace",
+    "visual_preset": "signal-flow",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "view-flow-enrollment",
+        "label": "Ruta Crítica de Reinscripción",
+        "focus": ["v_entry", "v_login", "v_dash", "v_wiz_group", "v_wiz_load", "v_wiz_receipt", "v_return_dash"],
+        "note": "Secuencia ergonómica del asistente de reinscripción desde el login hasta el comprobante final."
+      },
+      {
+        "id": "view-flow-modules",
+        "label": "Módulos de Consulta y Calendario",
+        "focus": ["v_dash", "v_kardex", "v_seguridad", "v_calendar", "v_cal_filters", "v_return_dash"],
+        "note": "Navegación por el Kardex escolar, configuración biométrica y el calendario institucional de 14 meses."
+      }
+    ],
+    "output": "18-screen-wireflow.html"
+  },
+  "lanes": [
+    { "id": "auth", "label": "Acceso & Autenticación (Login)" },
+    { "id": "core", "label": "Panel Principal & Módulos Académicos" },
+    { "id": "enrollment", "label": "Asistente de Reinscripción" },
+    { "id": "calendar", "label": "Calendario Escolar Oficial (14 Meses)" }
+  ],
+  "phases": [
+    { "id": "phase-auth-entry", "label": "Control de Acceso y Sesión", "fromCol": 0, "toCol": 1 },
+    { "id": "phase-nav-hub", "label": "Hub de Navegación y Vistas Base", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "phase-flow-complete", "label": "Trámites Avanzados y Cierre", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "groups": [
+    { "id": "grp-wizard", "label": "Asistente Secuencial", "lane": "enrollment", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
+    { "id": "grp-calendar", "label": "Exploración Temporal", "lane": "calendar", "fromCol": 2, "toCol": 3, "variant": "dashed" }
+  ],
+  "mainPath": [
+    "v_entry",
+    "v_login",
+    "v_dash",
+    "v_wiz_group",
+    "v_wiz_load",
+    "v_wiz_receipt",
+    "v_return_dash"
+  ],
+  "nodes": [
+    { "id": "v_entry", "lane": "auth", "col": 0, "type": "frontend", "label": "Entrada PWA", "sublabel": "Verificar sesión activa", "width": 140 },
+    { "id": "v_login", "lane": "auth", "col": 1, "type": "frontend", "label": "LoginView", "sublabel": "Matrícula y credencial", "width": 140 },
+
+    { "id": "v_dash", "lane": "core", "col": 1, "type": "backend", "label": "DashboardView", "sublabel": "Centro de Operaciones", "tag": "Hub Central", "width": 140 },
+    { "id": "v_kardex", "lane": "core", "col": 2, "type": "backend", "label": "KardexView", "sublabel": "Historial de materias", "width": 140 },
+    { "id": "v_seguridad", "lane": "core", "col": 3, "type": "security", "label": "SeguridadView", "sublabel": "Passkeys y PIN", "width": 140 },
+
+    { "id": "v_wiz_group", "lane": "enrollment", "col": 2, "type": "frontend", "label": "Paso 1: Grupo", "sublabel": "Seleccionar grupo", "tag": "Asistente", "width": 140 },
+    { "id": "v_wiz_load", "lane": "enrollment", "col": 3, "type": "frontend", "label": "Paso 2: Carga", "sublabel": "Materias (20-36 cr)", "tag": "Validación", "width": 140 },
+    { "id": "v_wiz_receipt", "lane": "enrollment", "col": 4, "type": "frontend", "label": "Paso 3: Sello", "sublabel": "Comprobante Oficial QR", "tag": "Listo", "width": 140 },
+
+    { "id": "v_calendar", "lane": "calendar", "col": 2, "type": "cloud", "label": "CalendarioView", "sublabel": "Oficial 14 Meses", "tag": "Periodo Sep-Ene", "width": 140 },
+    { "id": "v_cal_filters", "lane": "calendar", "col": 3, "type": "cloud", "label": "Simbología & Hoy", "sublabel": "14 indicadores y foco", "width": 140 },
+
+    { "id": "v_return_dash", "lane": "core", "col": 5, "type": "backend", "label": "Retorno al Panel", "sublabel": "Navegación reactiva", "width": 140 }
+  ],
+  "edges": [
+    { "id": "e-entry-login", "from": "v_entry", "to": "v_login", "label": "sin sesión", "variant": "default" },
+    { "id": "e-entry-dash", "from": "v_entry", "to": "v_dash", "label": "sesión activa", "variant": "emphasis" },
+    { "id": "e-login-dash", "from": "v_login", "to": "v_dash", "label": "auth exitoso", "variant": "emphasis" },
+
+    { "id": "e-dash-kardex", "from": "v_dash", "to": "v_kardex", "variant": "default" },
+    { "id": "e-kardex-seg", "from": "v_kardex", "to": "v_seguridad", "variant": "default" },
+    { "id": "e-seg-return", "from": "v_seguridad", "to": "v_return_dash", "variant": "default" },
+
+    { "id": "e-dash-wiz", "from": "v_dash", "to": "v_wiz_group", "label": "reinscripción", "variant": "emphasis" },
+    { "id": "e-wiz-load", "from": "v_wiz_group", "to": "v_wiz_load", "label": "grupo elegido", "variant": "emphasis" },
+    { "id": "e-load-receipt", "from": "v_wiz_load", "to": "v_wiz_receipt", "label": "carga válida", "variant": "emphasis" },
+    { "id": "e-receipt-return", "from": "v_wiz_receipt", "to": "v_return_dash", "label": "completado", "variant": "emphasis" },
+
+    { "id": "e-dash-cal", "from": "v_dash", "to": "v_calendar", "label": "calendario", "variant": "default" },
+    { "id": "e-cal-filters", "from": "v_calendar", "to": "v_cal_filters", "label": "modo 14 meses", "variant": "default" },
+    { "id": "e-filters-return", "from": "v_cal_filters", "to": "v_return_dash", "label": "volver", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Arquitectura de Navegación SPA (ISO 9241-210)",
+      "items": [
+        "Transiciones reactivas inmediatas gobernadas por el estado reactivo currentView",
+        "Cero recargas destructivas de página completa y persistencia del estado en segundo plano"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Flujo de Asistente Dirigido",
+      "items": [
+        "El trámite de reinscripción se estructura en un túnel de 3 pasos con validación en cada etapa",
+        "El módulo de Calendario Oficial ofrece 14 meses interactivos con filtros por simbología institucional"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Diagrama de Despliegue Físico y de Contenedores (UML Deployment)",
+    "subtitle": "Nodos de cómputo, artefactos compilados, puertos de red y clustering de base de datos (OMG UML 2.5)",
+    "output": "13-deployment-uml.html",
+    "viewBox": [1260, 560],
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "view-deploy-all",
+        "label": "Topología Integral de Nodos UML",
+        "focus": ["artifact_sw", "proxy_nginx", "backend_server", "api_router", "db_postgres"],
+        "note": "Despliegue distribuido entre los dispositivos del alumno, Cloud Run Ingress y PostgreSQL."
+      },
+      {
+        "id": "view-server-db",
+        "label": "Contenedor y Persistencia Central",
+        "focus": ["backend_server", "static_handler", "api_router", "db_postgres"],
+        "note": "Ejecución del bundle compilado dist/server.cjs y enlace TCP/IP cifrado al cluster de base de datos."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "artifact_react",
+      "type": "frontend",
+      "label": "React 19 SPA Bundle",
+      "sublabel": "dist/assets/index.js",
+      "tag": "Artefacto UI",
+      "pos": [60, 80],
+      "size": [200, 60]
+    },
+    {
+      "id": "artifact_sw",
+      "type": "frontend",
+      "label": "Service Worker Engine",
+      "sublabel": "dist/sw.js (Workbox)",
+      "tag": "Runtime Worker",
+      "pos": [60, 200],
+      "size": [200, 60]
+    },
+    {
+      "id": "artifact_cache",
+      "type": "database",
+      "label": "Cache Storage",
+      "sublabel": "Assets inmutables locales",
+      "tag": "Almacén PWA",
+      "pos": [60, 320],
+      "size": [200, 60]
+    },
+    {
+      "id": "artifact_idb",
+      "type": "database",
+      "label": "IndexedDB 3.0",
+      "sublabel": "TESChi_Escolar_DB",
+      "tag": "ACID Local",
+      "pos": [60, 440],
+      "size": [200, 60]
+    },
+
+    {
+      "id": "module_ssl",
+      "type": "security",
+      "label": "Terminación TLS 1.3",
+      "sublabel": "Certificados gestionados",
+      "tag": "Perímetro",
+      "pos": [370, 80],
+      "size": [200, 60]
+    },
+    {
+      "id": "proxy_nginx",
+      "type": "cloud",
+      "label": "Reverse Proxy NGINX",
+      "sublabel": "Ingress Puerto 3000",
+      "tag": "Proxy Edge",
+      "pos": [370, 200],
+      "size": [200, 60]
+    },
+
+    {
+      "id": "static_handler",
+      "type": "frontend",
+      "label": "Static File Handler",
+      "sublabel": "Servidor dist/ express.static",
+      "tag": "Estáticos",
+      "pos": [670, 80],
+      "size": [220, 60]
+    },
+    {
+      "id": "backend_server",
+      "type": "backend",
+      "label": "dist/server.cjs",
+      "sublabel": "Runtime Node.js 22 LTS",
+      "tag": "Contenedor OCI",
+      "pos": [670, 200],
+      "size": [220, 60]
+    },
+    {
+      "id": "api_router",
+      "type": "backend",
+      "label": "Controlador API REST",
+      "sublabel": "Endpoints /api/v1/*",
+      "tag": "Lógica Escolar",
+      "pos": [670, 320],
+      "size": [220, 60]
+    },
+
+    {
+      "id": "db_postgres",
+      "type": "database",
+      "label": "PostgreSQL 15 Cluster",
+      "sublabel": "SIIE Padrón y Calificaciones",
+      "tag": "Cluster Central",
+      "pos": [990, 320],
+      "size": [210, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Nodo Físico: Dispositivo del Alumno (Smartphone / PC)",
+      "wraps": ["artifact_react", "artifact_sw", "artifact_cache", "artifact_idb"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Nodo Lógico: Cloud Run Ingress & Edge Proxy",
+      "wraps": ["module_ssl", "proxy_nginx"]
+    },
+    {
+      "kind": "region",
+      "label": "Nodo de Contenedor: Google Cloud Run Sandbox",
+      "wraps": ["static_handler", "backend_server", "api_router"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Nodo Central: Base de Datos Institucional",
+      "wraps": ["db_postgres"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_react_sw",
+      "from": "artifact_react",
+      "to": "artifact_sw",
+      "label": "postMessage",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_sw_cache",
+      "from": "artifact_sw",
+      "to": "artifact_cache",
+      "label": "caches.match",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_cache_idb",
+      "from": "artifact_cache",
+      "to": "artifact_idb",
+      "label": "sync_queue",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_ssl_nginx",
+      "from": "module_ssl",
+      "to": "proxy_nginx",
+      "label": "TLS 1.3 Offload",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_sw_nginx",
+      "from": "artifact_sw",
+      "to": "proxy_nginx",
+      "label": "HTTPS :3000",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_nginx_server",
+      "from": "proxy_nginx",
+      "to": "backend_server",
+      "label": "HTTP Interno",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_server_static",
+      "from": "backend_server",
+      "to": "static_handler",
+      "label": "sirve SPA",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -20
+    },
+    {
+      "id": "conn_server_api",
+      "from": "backend_server",
+      "to": "api_router",
+      "label": "enruta API",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_api_db",
+      "from": "api_router",
+      "to": "db_postgres",
+      "label": "TCP/IP TLS :5432",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Alineación UML 2.5 y Despliegue Distribuido",
+      "items": [
+        "Mapeo riguroso de nodos físicos de usuario, proxies lógicos y sandboxes de contenedores",
+        "Encapsulamiento del servidor en dist/server.cjs empaquetado y optimizado con esbuild"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Convergencia de Puertos y Seguridad",
+      "items": [
+        "Todo el tráfico entrante de la aplicación se centraliza en el puerto 3000 detrás de TLS 1.3",
+        "El enlace a la base de datos PostgreSQL viaja por un canal privado con credenciales cifradas"
+      ]
+    }
+  ]
+}

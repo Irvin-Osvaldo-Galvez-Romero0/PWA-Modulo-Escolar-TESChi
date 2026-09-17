@@ -1,0 +1,257 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura del App Shell y Contenedores Dinámicos PWA",
+    "subtitle": "Separación de estructura perenne en caché y vistas modulares reactivas (W3C PWA e ISO 9241-110)",
+    "output": "04-app-shell-architecture.html",
+    "viewBox": [1200, 560],
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "view-shell-all",
+        "label": "Estructura Completa App Shell",
+        "focus": ["navbar", "error_boundary", "view_dash", "view_wiz", "view_voucher"],
+        "note": "Desacoplamiento entre la barra de navegación perenne pre-cacheada y las vistas dinámicas."
+      },
+      {
+        "id": "view-resilience-boundary",
+        "label": "Contención de Errores y Navegación",
+        "focus": ["navbar", "error_boundary", "view_dash", "view_kardex", "view_calendar"],
+        "note": "Aislamiento de excepciones mediante ErrorBoundary previniendo pantallas blancas."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "statusbar",
+      "type": "frontend",
+      "label": "Barra de Estado",
+      "sublabel": "theme-color #012d1d",
+      "tag": "Safe Area W3C",
+      "pos": [60, 70],
+      "size": [190, 60]
+    },
+    {
+      "id": "navbar",
+      "type": "frontend",
+      "label": "Navbar Superior",
+      "sublabel": "Header institucional fijo",
+      "tag": "Inmutable",
+      "pos": [60, 190],
+      "size": [190, 60]
+    },
+    {
+      "id": "logo",
+      "type": "frontend",
+      "label": "TeschiLogo Oficial",
+      "sublabel": "Contenedor redondeado",
+      "tag": "Identidad",
+      "pos": [60, 310],
+      "size": [190, 60]
+    },
+    {
+      "id": "offline_indicator",
+      "type": "security",
+      "label": "OfflineIndicator",
+      "sublabel": "Detección red en vivo",
+      "tag": "Conectividad",
+      "pos": [60, 430],
+      "size": [190, 60]
+    },
+
+    {
+      "id": "error_boundary",
+      "type": "security",
+      "label": "ErrorBoundary",
+      "sublabel": "Aislamiento ISO 9241-110",
+      "tag": "Contención",
+      "pos": [370, 70],
+      "size": [190, 60]
+    },
+    {
+      "id": "view_login",
+      "type": "frontend",
+      "label": "LoginView",
+      "sublabel": "Matrícula y PIN 4 dígitos",
+      "tag": "Pública",
+      "pos": [670, 70],
+      "size": [190, 60]
+    },
+
+    {
+      "id": "view_dash",
+      "type": "frontend",
+      "label": "DashboardView",
+      "sublabel": "Hub de operaciones escolar",
+      "tag": "currentView",
+      "pos": [370, 210],
+      "size": [190, 60]
+    },
+    {
+      "id": "view_wiz",
+      "type": "frontend",
+      "label": "ReinscripcionWizard",
+      "sublabel": "Grupo, carga y créditos",
+      "tag": "Trámite",
+      "pos": [670, 210],
+      "size": [190, 60]
+    },
+    {
+      "id": "view_voucher",
+      "type": "frontend",
+      "label": "ComprobanteView",
+      "sublabel": "Folio QR y descarga PDF",
+      "tag": "Sello Oficial",
+      "pos": [960, 210],
+      "size": [180, 60]
+    },
+
+    {
+      "id": "view_kardex",
+      "type": "frontend",
+      "label": "KardexView",
+      "sublabel": "Historial académico",
+      "tag": "Consulta",
+      "pos": [370, 350],
+      "size": [190, 60]
+    },
+    {
+      "id": "view_calendar",
+      "type": "cloud",
+      "label": "CalendarioView",
+      "sublabel": "14 meses y 14 indicadores",
+      "tag": "Oficial",
+      "pos": [670, 350],
+      "size": [190, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "App Shell Estático (Pre-cacheado e Inmutable)",
+      "wraps": ["statusbar", "navbar", "logo", "offline_indicator"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Contenedor Dinámico React (max-w-4xl mx-auto)",
+      "wraps": ["error_boundary", "view_login", "view_dash", "view_wiz", "view_voucher", "view_kardex", "view_calendar"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_nav_status",
+      "from": "navbar",
+      "to": "statusbar",
+      "label": "ancla",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -20
+    },
+    {
+      "id": "conn_nav_logo",
+      "from": "navbar",
+      "to": "logo",
+      "label": "marca",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_logo_offline",
+      "from": "logo",
+      "to": "offline_indicator",
+      "label": "red",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_navbar_dash",
+      "from": "navbar",
+      "to": "view_dash",
+      "label": "monta UI",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_boundary_dash",
+      "from": "error_boundary",
+      "to": "view_dash",
+      "label": "protege",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_boundary_login",
+      "from": "error_boundary",
+      "to": "view_login",
+      "label": "sin sesión",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_dash_wiz",
+      "from": "view_dash",
+      "to": "view_wiz",
+      "label": "reinscripción",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_wiz_voucher",
+      "from": "view_wiz",
+      "to": "view_voucher",
+      "label": "sello oficial",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_dash_kardex",
+      "from": "view_dash",
+      "to": "view_kardex",
+      "label": "kardex",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_kardex_cal",
+      "from": "view_kardex",
+      "to": "view_calendar",
+      "label": "calendario",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Arquitectura de Desempeño 60 FPS",
+      "items": [
+        "El App Shell inmutable permanece activo en memoria evitando parpadeos de pantalla (CLS = 0)",
+        "Las vistas dinámicas se conmutan de forma reactiva gobernadas por currentView"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Aislamiento de Excepciones",
+      "items": [
+        "ErrorBoundary atrapa cualquier error en vistas secundarias sin tumbar el Navbar ni el marco PWA",
+        "El OfflineIndicator alerta al alumno de pérdida de conectividad manteniendo disponible la interfaz"
+      ]
+    }
+  ]
+}

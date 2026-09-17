@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura del Módulo de Servicios Escolares TESChi",
+    "subtitle": "PWA Offline-First Multiplataforma con Persistencia Local y Sincronización Asíncrona (ISO/IEC 25010 & 27001)",
+    "output": "sistema-arquitectura.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "flujo-principal",
+        "label": "Flujo Principal de Trámites",
+        "focus": ["estudiantes", "ui_views", "api_client", "express_server", "siie_core"],
+        "note": "Ruta primaria de tramitación académica desde la interfaz de usuario hasta el sistema escolar central."
+      },
+      {
+        "id": "persistencia-offline",
+        "label": "Persistencia Offline y Sync",
+        "focus": ["ui_views", "sw_cache", "api_client", "storage_adapter", "sync_queue", "express_server"],
+        "note": "Arquitectura Offline-First con caché local en IndexedDB y cola de sincronización asíncrona ante fallas de red."
+      },
+      {
+        "id": "seguridad-auditoria",
+        "label": "Seguridad y Auditoría ISO",
+        "focus": ["ui_views", "auth_biometrics", "express_server", "crypto_audit"],
+        "note": "Autenticación multifactor biométrica WebAuthn y generación de comprobantes oficiales con firma digital SHA-256."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "estudiantes",
+      "type": "external",
+      "label": "Estudiantes TESChi",
+      "sublabel": "PWA Móvil / Desktop",
+      "pos": [40, 220],
+      "size": [140, 64]
+    },
+    {
+      "id": "ui_views",
+      "type": "frontend",
+      "label": "Módulos Escolares",
+      "sublabel": "Reinscripción, Kardex, Carga",
+      "tag": "React 19 + Tailwind",
+      "brand": "react",
+      "pos": [275, 220],
+      "size": [170, 64]
+    },
+    {
+      "id": "auth_biometrics",
+      "type": "security",
+      "label": "Auth & Biometría",
+      "sublabel": "WebAuthn / PIN / Passkey",
+      "tag": "ISO/IEC 27001",
+      "pos": [275, 80],
+      "size": [170, 64]
+    },
+    {
+      "id": "sw_cache",
+      "type": "frontend",
+      "label": "Service Worker",
+      "sublabel": "Workbox / Pre-cache",
+      "tag": "Offline Shell",
+      "pos": [275, 360],
+      "size": [170, 64]
+    },
+    {
+      "id": "api_client",
+      "type": "frontend",
+      "label": "Cliente API & Estado",
+      "sublabel": "ApiClient / App.tsx",
+      "tag": "Optimistic UI",
+      "brand": "typescript",
+      "pos": [540, 220],
+      "size": [170, 64]
+    },
+    {
+      "id": "storage_adapter",
+      "type": "database",
+      "label": "IndexedDB Adapter",
+      "sublabel": "TESChi_Escolar_DB",
+      "tag": "Persistencia Local",
+      "pos": [540, 80],
+      "size": [170, 64]
+    },
+    {
+      "id": "sync_queue",
+      "type": "messagebus",
+      "label": "Cola Sincronización",
+      "sublabel": "Background SyncQueue",
+      "tag": "Resiliencia Offline",
+      "pos": [540, 360],
+      "size": [170, 64]
+    },
+    {
+      "id": "express_server",
+      "type": "backend",
+      "label": "Servidor REST Express",
+      "sublabel": "server.ts :3000",
+      "tag": "API v1 + SPA Host",
+      "brand": "node-js",
+      "pos": [820, 220],
+      "size": [170, 64]
+    },
+    {
+      "id": "crypto_audit",
+      "type": "security",
+      "label": "Firma y Folios FOR-002",
+      "sublabel": "Sello Digital SHA-256",
+      "tag": "Auditoría Legal",
+      "pos": [820, 80],
+      "size": [170, 64]
+    },
+    {
+      "id": "siie_core",
+      "type": "database",
+      "label": "Sistema Central SIIE",
+      "sublabel": "Base Central Escolar",
+      "tag": "Control Escolar",
+      "brand": "postgresql",
+      "pos": [1085, 220],
+      "size": [170, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cliente PWA Multiplataforma (Navegador / Dispositivo Estudiantil)",
+      "wraps": ["ui_views", "auth_biometrics", "sw_cache", "api_client", "storage_adapter", "sync_queue"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Infraestructura de Servicios Escolares (Node.js Express + SIIE)",
+      "wraps": ["crypto_audit", "express_server", "siie_core"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_user_ui",
+      "from": "estudiantes",
+      "to": "ui_views",
+      "label": "Acceso PWA",
+      "variant": "emphasis"
+    },
+    {
+      "id": "conn_ui_auth",
+      "from": "ui_views",
+      "to": "auth_biometrics",
+      "label": "PIN / WebAuthn",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -38
+    },
+    {
+      "id": "conn_ui_sw",
+      "from": "ui_views",
+      "to": "sw_cache",
+      "label": "App Shell",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 38
+    },
+    {
+      "id": "conn_ui_api",
+      "from": "ui_views",
+      "to": "api_client",
+      "label": "Acciones UI"
+    },
+    {
+      "id": "conn_api_storage",
+      "from": "api_client",
+      "to": "storage_adapter",
+      "label": "Persistencia",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -38
+    },
+    {
+      "id": "conn_api_sync",
+      "from": "api_client",
+      "to": "sync_queue",
+      "label": "Encolar Offline",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 38
+    },
+    {
+      "id": "conn_api_server",
+      "from": "api_client",
+      "to": "express_server",
+      "label": "REST HTTPS :3000",
+      "variant": "emphasis"
+    },
+    {
+      "id": "conn_sync_server",
+      "from": "sync_queue",
+      "to": "express_server",
+      "label": "Background Sync",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "conn_server_crypto",
+      "from": "express_server",
+      "to": "crypto_audit",
+      "label": "Sello SHA-256",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -38
+    },
+    {
+      "id": "conn_server_siie",
+      "from": "express_server",
+      "to": "siie_core",
+      "label": "Consolidación"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Capa Cliente & PWA Offline-First",
+      "items": [
+        "Vistas modulares en React 19: Dashboard, Reinscripción, Carga Académica y Kardex",
+        "Service Worker con Workbox para pre-caché y disponibilidad inmediata sin conexión",
+        "Detección de conectividad reactiva y feedback háptico bajo norma ISO 9241-110"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Persistencia & Resiliencia de Datos",
+      "items": [
+        "IndexedDB (TESChi_Escolar_DB) con stores para estado y almacén seguro de tokens",
+        "BackgroundSyncQueue con reintentos automáticos y algoritmo de retroceso exponencial",
+        "Patrón Adapter para portabilidad universal en Web, PWA, Capacitor y Desktop"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Seguridad Institucional & Backend",
+      "items": [
+        "API REST Express versionada (/api/v1) bajo estándares ISO/IEC 25010 y 27001",
+        "Autenticación biométrica WebAuthn / Passkeys y validación de entropía de contraseñas",
+        "Generación de comprobantes oficiales FOR-002 con firma digital y hash criptográfico SHA-256"
+      ]
+    }
+  ]
+}

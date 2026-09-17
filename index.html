@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Módulo Auxiliar de Servicios Escolares TESChi</title>
+    <meta name="description" content="Sistema multiplataforma institucional (PWA, Desktop, Mobile) para trámites académicos, reinscripciones, kardex y gestión de servicios escolares del TESChi bajo normas ISO y alta seguridad." />
+    <meta property="og:title" content="Módulo Auxiliar de Servicios Escolares TESChi" />
+    <meta property="og:description" content="Sistema multiplataforma institucional para trámites escolares del TESChi." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#012d1d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TESChi" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        // 1. Mock de protección contra fallas de WebSocket de Vite HMR en Cloud Run
+        if (typeof window !== 'undefined') {
+          const NativeWebSocket = window.WebSocket;
+          if (NativeWebSocket) {
+            window.WebSocket = function(url, protocols) {
+              const urlStr = String(url || '');
+              const protoStr = String(protocols || '');
+              if (urlStr.includes('/@vite') || protoStr.includes('vite-hmr') || urlStr.includes('3000') || urlStr.includes('5173')) {
+                const listeners = {};
+                const mock = {
+                  url: urlStr,
+                  protocols: protoStr,
+                  readyState: 1, // OPEN
+                  binaryType: 'blob',
+                  bufferedAmount: 0,
+                  extensions: '',
+                  protocol: protoStr,
+                  onopen: null,
+                  onclose: null,
+                  onerror: null,
+                  onmessage: null,
+                  addEventListener: function(type, fn) {
+                    if (!listeners[type]) listeners[type] = [];
+                    listeners[type].push(fn);
+                  },
+                  removeEventListener: function(type, fn) {
+                    if (listeners[type]) {
+                      listeners[type] = listeners[type].filter(function(cb) { return cb !== fn; });
+                    }
+                  },
+                  dispatchEvent: function() { return true; },
+                  send: function() {},
+                  close: function() {
+                    this.readyState = 3;
+                    const ev = new Event('close');
+                    ev.wasClean = true;
+                    if (typeof this.onclose === 'function') this.onclose(ev);
+                    if (listeners['close']) {
+                      listeners['close'].forEach(function(cb) { cb(ev); });
+                    }
+                  }
+                };
+
+                setTimeout(function() {
+                  const ev = new Event('open');
+                  if (typeof mock.onopen === 'function') mock.onopen(ev);
+                  if (listeners['open']) {
+                    listeners['open'].forEach(function(cb) { cb(ev); });
+                  }
+                }, 10);
+
+                return mock;
+              }
+              return new NativeWebSocket(url, protocols);
+            };
+
+            window.WebSocket.prototype = NativeWebSocket.prototype;
+            window.WebSocket.CONNECTING = NativeWebSocket.CONNECTING;
+            window.WebSocket.OPEN = NativeWebSocket.OPEN;
+            window.WebSocket.CLOSING = NativeWebSocket.CLOSING;
+            window.WebSocket.CLOSED = NativeWebSocket.CLOSED;
+          }
+        }
+
+        // 2. Supresor de errores de consola y listeners globales para excepciones de WebSocket
+        const isWsError = function(val) {
+          if (!val) return false;
+          const str = typeof val === 'string' ? val : (val.message || val.reason || String(val));
+          return str.includes('WebSocket') || str.includes('[vite]');
+        };
+
+        const origError = console.error;
+        console.error = function(...args) {
+          if (args.some(isWsError)) return;
+          origError.apply(console, args);
+        };
+
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+          if (args.some(isWsError)) return;
+          origWarn.apply(console, args);
+        };
+
+        window.onerror = function(message, source, lineno, colno, error) {
+          if (isWsError(message) || isWsError(error)) {
+            return true;
+          }
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (isWsError(event.reason)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          if (isWsError(event.message) || isWsError(event.error)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body class="bg-[#f8f9fa] text-[#191c1d] antialiased selection:bg-[#aeeecb] selection:text-[#002114]">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

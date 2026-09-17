@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Ciclo de Vida del Service Worker PWA (W3C)",
+    "subtitle": "Gestión determinista de estados, pre-caché y activación bajo ISO/IEC 25010",
+    "output": "01-service-worker-lifecycle.html",
+    "viewBox": [1060, 690],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "ciclo-principal",
+        "label": "Ruta Principal de Activación",
+        "focus": ["registering", "installing", "activating", "activated"],
+        "note": "Secuencia estándar desde el registro hasta el control total del scope de la PWA."
+      },
+      {
+        "id": "espera-activacion",
+        "label": "Espera y Reemplazo de Caché",
+        "focus": ["installing", "waiting_gate", "activating", "purging"],
+        "note": "Pausa en estado Waiting y purga de versiones antiguas con clients.claim()."
+      },
+      {
+        "id": "terminal-redundant",
+        "label": "Obsolescencia y Redundancia",
+        "focus": ["installing", "activated", "redundant"],
+        "note": "Rutas de descarte por fallo de descarga de assets o por activación de un nuevo Service Worker."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Fases Principales de Ejecución" },
+    { "id": "waiting", "label": "Espera y Validación" },
+    { "id": "exceptions", "label": "Limpieza y Purga" },
+    { "id": "terminal", "label": "Estados Terminales" }
+  ],
+  "states": [
+    { "id": "registering", "type": "start", "label": "Registro", "sublabel": "navigator.register()", "lane": "main", "col": 0, "step": "01", "tag": "init" },
+    { "id": "installing", "type": "active", "label": "Instalación", "sublabel": "Pre-cacheo Workbox", "lane": "main", "col": 1, "step": "02", "tag": "cache" },
+    { "id": "activating", "type": "active", "label": "Activación", "sublabel": "clients.claim()", "lane": "main", "col": 2, "step": "03", "tag": "claim" },
+    { "id": "activated", "type": "success", "label": "Activo y Controlando", "sublabel": "Interceptación fetch", "lane": "main", "col": 3, "step": "04", "tag": "ready" },
+    { "id": "waiting_gate", "type": "waiting", "label": "En Espera", "sublabel": "esperando cierre tabs", "lane": "waiting", "col": 0, "tag": "pause" },
+    { "id": "purging", "type": "decision", "label": "Purgando Caché", "sublabel": "limpieza de versiones", "lane": "exceptions", "col": 1, "tag": "cleanup" },
+    { "id": "redundant", "type": "failure", "label": "Redundante", "sublabel": "obsoleto o abortado", "lane": "terminal", "col": 1, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "id": "reg-install", "from": "registering", "to": "installing", "variant": "default" },
+    { "id": "install-wait", "from": "installing", "to": "waiting_gate", "label": "pre-cache ok", "variant": "default", "route": "drop" },
+    { "id": "wait-activate", "from": "waiting_gate", "to": "activating", "label": "skipWaiting()", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "route": "straight" },
+    { "id": "activate-active", "from": "activating", "to": "activated", "label": "claim()", "variant": "emphasis", "labelDy": -24 },
+    { "id": "activate-purge", "from": "activating", "to": "purging", "label": "purgar previos", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "id": "install-fail", "from": "installing", "to": "redundant", "label": "error 404", "variant": "security", "fromSide": "bottom", "toSide": "left", "via": [[248, 479]] },
+    { "id": "active-retire", "from": "activated", "to": "redundant", "label": "reemplazado", "variant": "security", "fromSide": "right", "toSide": "right", "via": [[780, 157], [780, 479]] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Fases Operativas W3C",
+      "items": [
+        "El ciclo garantiza que la app nunca ejecute código a medio instalar",
+        "El pre-caché atómico asegura que todos los assets estáticos estén disponibles offline"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Control y Redundancia",
+      "items": [
+        "skipWaiting() permite activar versiones críticas de reinscripción sin reiniciar",
+        "Los Service Workers antiguos se purgan deterministamente pasando a estado Redundant"
+      ]
+    }
+  ]
+}

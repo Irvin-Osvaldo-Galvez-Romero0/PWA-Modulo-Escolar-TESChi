@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="108" fill="#ffffff"/>
+  <rect x="16" y="16" width="480" height="480" rx="92" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+
+  <defs>
+    <filter id="pwaTileShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="4" dy="6" stdDeviation="3" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+    <filter id="pwaLetterShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="3" dy="4" stdDeviation="1" flood-color="#0d2817" flood-opacity="0.8" />
+    </filter>
+  </defs>
+
+  <!-- Centered Official TESCHI Lockup -->
+  <g transform="translate(16, 60)">
+    <!-- TES Letters -->
+    <g filter="url(#pwaLetterShadow)">
+      <!-- T -->
+      <path d="M 44 48 L 86 48 L 86 63 L 72 63 L 72 108 L 58 108 L 58 63 L 44 63 Z" fill="#246a3b" transform="scale(1.1) translate(-5, 10)" />
+      <!-- E -->
+      <path d="M 94 48 L 132 48 L 132 62 L 108 62 L 108 71 L 128 71 L 128 84 L 108 84 L 108 94 L 134 94 L 134 108 L 94 108 Z" fill="#246a3b" transform="scale(1.1) translate(-5, 10)" />
+      <!-- S -->
+      <path d="M 174 53 C 168 47 159 47 151 47 C 141 47 136 53 136 60 C 136 76 176 69 176 93 C 176 104 167 109 152 109 C 142 109 135 105 130 99 L 139 88 C 143 93 148 96 153 96 C 158 96 162 93 162 89 C 162 76 122 81 122 59 C 122 50 131 47 142 47 C 153 47 163 50 168 56 Z" fill="#246a3b" transform="scale(1.1) translate(-5, 10)" />
+    </g>
+
+    <!-- CHI Tiles -->
+    <g transform="scale(1.1) translate(-5, 10)">
+      <!-- C Tile -->
+      <g filter="url(#pwaTileShadow)">
+        <rect x="188" y="38" width="64" height="74" rx="10" ry="10" fill="#84b438" stroke="#688f28" stroke-width="2.5" />
+        <path d="M 235 59 C 231 52 225 50 218 50 C 206 50 199 59 199 74 C 199 89 207 98 219 98 C 226 98 232 95 236 88 L 244 95 C 238 105 229 108 218 108 C 200 108 188 94 188 74 C 188 54 201 40 220 40 C 230 40 239 44 245 52 Z" fill="#ffffff" transform="translate(4, 2)" />
+      </g>
+      <!-- H Tile -->
+      <g filter="url(#pwaTileShadow)">
+        <rect x="256" y="38" width="64" height="74" rx="10" ry="10" fill="#b3ada6" stroke="#8c857e" stroke-width="2.5" />
+        <path d="M 271 49 L 283 49 L 283 67 L 293 67 L 293 49 L 305 49 L 305 100 L 293 100 L 293 80 L 283 80 L 283 100 L 271 100 Z" fill="#ffffff" transform="translate(0, 1)" />
+      </g>
+      <!-- I Tile -->
+      <g filter="url(#pwaTileShadow)">
+        <rect x="324" y="38" width="64" height="74" rx="10" ry="10" fill="#246a3b" stroke="#174826" stroke-width="2.5" />
+        <path d="M 350 49 L 362 49 L 362 101 L 350 101 Z" fill="#ffffff" transform="translate(0, 1)" />
+      </g>
+    </g>
+
+    <!-- Subtitle -->
+    <text x="225" y="195" text-anchor="middle" font-family="'Montserrat', 'Inter', system-ui, sans-serif" font-size="16" font-weight="900" fill="#1b2220" letter-spacing="1.5">
+      TECNOLÓGICO DE ESTUDIOS SUPERIORES
+    </text>
+    <line x1="25" y1="210" x2="425" y2="210" stroke="#a7342b" stroke-width="3" stroke-linecap="round" />
+    <text x="225" y="235" text-anchor="middle" font-family="'Montserrat', 'Inter', system-ui, sans-serif" font-size="18" font-weight="900" fill="#1b2220" letter-spacing="3.5">
+      CHIMALHUACÁN
+    </text>
+  </g>
+
+  <rect x="156" y="420" width="200" height="32" rx="16" fill="#012d1d"/>
+  <text x="256" y="441" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#aeeecb" letter-spacing="1">SERVICIOS ESCOLARES</text>
+</svg>
