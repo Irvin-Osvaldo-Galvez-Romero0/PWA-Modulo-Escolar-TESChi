@@ -23,6 +23,9 @@ export interface GroupOption {
   cupoDisponible: number;
   cupoMaximo: number;
   semestre: string;
+  semestreNumero?: number;
+  carrera?: string;
+  claveGrupo?: string;
 }
 
 export interface Course {
@@ -34,6 +37,8 @@ export interface Course {
   horario: string;
   aula?: string;
   semestre?: number;
+  carrera?: string;
+  area?: string;
   calificacion?: number;
   tipoEvaluacion?: 'Ordinario' | 'Extraordinario' | 'Especial';
 }
@@ -81,4 +86,30 @@ export interface BiometricAuthResult {
   message: string;
   credentialId?: string;
   methodUsed: 'WebAuthn' | 'CapacitorBiometrics' | 'TauriWindowsHello' | 'Simulation';
+}
+
+export interface SiiaUsuario {
+  usuario: string;
+  numUsuario: string;
+  nombre: string;
+  paterno: string;
+  materno: string;
+  nombreCompleto: string;
+  correo: string;
+  tipo: string;
+  idArea: number;
+  area: string;
+  idCarrera: number;
+  tipoCarrera: string;
+  permisos: string;
+  cambioPw: number;
+  puedeAsistencia: boolean;
+}
+
+export interface SiiaLoginResponse {
+  ok: boolean;
+  mensaje: string;
+  token: string | null;
+  expiraEnMinutos: number;
+  usuario: SiiaUsuario | null;
 }

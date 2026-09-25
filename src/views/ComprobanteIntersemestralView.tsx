@@ -1,19 +1,46 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Download, Mail, CheckCircle2, ShieldCheck, QrCode } from 'lucide-react';
-import { StudentProfile } from '../types';
+import { Download, Mail, CheckCircle2, ShieldCheck, QrCode, ArrowLeft, Edit3 } from 'lucide-react';
+import { StudentProfile, ComprobanteRecord, Course } from '../types';
 import { DocumentAdapter } from '../services/documentAdapter';
 import { TeschiLogo } from '../components/TeschiLogo';
 
 interface ComprobanteIntersemestralViewProps {
   student: StudentProfile;
+  comprobante?: ComprobanteRecord | null;
+  onNavigate?: (view: string) => void;
 }
 
 export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralViewProps> = ({
   student,
+  comprobante,
+  onNavigate,
 }) => {
   const [downloading, setDownloading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Folio y datos dinámicos o fallback oficial
+  const folio = comprobante?.folio || 'FOR-002-01/02/19JUN25';
+  const fecha = comprobante?.fechaEmision || new Date().toLocaleDateString('es-MX');
+  const hash = comprobante?.hashFirmaDigital || '7f8a9b2c3d4e5f60a1b2c3d4e5f67a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f';
+
+  // Lista de materias inscritas
+  const materias: Course[] = (comprobante && comprobante.materias && comprobante.materias.length > 0)
+    ? comprobante.materias
+    : [
+        {
+          clave: 'ACF-0901',
+          nombre: 'Cálculo Diferencial',
+          creditos: 5,
+          profesor: 'Mtro. José Luis Benítez',
+          dias: 'Lun a Vie',
+          horario: '08:00 - 12:00',
+          aula: 'Edificio B - Aula 101',
+          semestre: 1,
+        },
+      ];
+
+  const totalCreditos = materias.reduce((acc, m) => acc + m.creditos, 0);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -31,7 +58,7 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
     await DocumentAdapter.shareViaEmail(
       student.email,
       `Solicitud Intersemestral FOR-002 - ${student.matricula}`,
-      `Estimado estudiante ${student.nombre},\n\nSe confirma la recepción del formato oficial FOR-002 para Cursos Intersemestrales.\nFolio: FOR-002-01/02/19JUN25\n\nDepartamento de Servicios Escolares - TESChi.`
+      `Estimado estudiante ${student.nombre},\n\nSe confirma la recepción del formato oficial FOR-002 para Cursos Intersemestrales.\nFolio: ${folio}\nAsignaturas: ${materias.map(m => m.nombre).join(', ')}\nTotal Créditos: ${totalCreditos}\n\nDepartamento de Servicios Escolares - TESChi.`
     );
     setToastMessage('Redirigiendo a tu cliente de correo...');
     setTimeout(() => setToastMessage(null), 4000);
@@ -39,6 +66,27 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-6 pb-20">
+      {/* Barra Superior de Navegación Rápida */}
+      {onNavigate && (
+        <div className="flex items-center justify-between no-print">
+          <button
+            onClick={() => onNavigate('intersemestrales')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#012d1d] hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Volver a Selección de Materias</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('intersemestrales')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>Cambiar Selección</span>
+          </button>
+        </div>
+      )}
+
       {/* Formato Oficial FOR-002 (Image 23) */}
       <motion.div
         id="intersemestral-document"
@@ -50,10 +98,10 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
         <div className="flex items-center justify-between border-b border-gray-100 pb-3">
           <div className="space-y-0.5">
             <span className="text-[10px] font-mono font-bold text-gray-400">FORMATO OFICIAL</span>
-            <p className="font-mono font-bold text-xs text-[#012d1d]">FOR-002-01/02/19JUN25</p>
+            <p className="font-mono font-bold text-xs text-[#012d1d]">{folio}</p>
           </div>
-          <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-[11px] font-bold">
-            EN REVISIÓN ESCOLAR
+          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 text-[11px] font-bold">
+            VALIDADO EN SISTEMA
           </span>
         </div>
 
@@ -64,8 +112,9 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
           </div>
           <p className="text-[11px] text-gray-500 font-medium">Subdirección de Servicios Escolares</p>
           <h4 className="text-sm font-bold text-[#191c1d]">
-            Solicitud de Registro a Curso Intersemestral
+            Solicitud de Registro a Curso Intersemestral (FOR-002)
           </h4>
+          <p className="text-[10px] text-gray-400 font-mono">Fecha de Emisión: {fecha}</p>
         </div>
 
         {/* Datos del Alumno */}
@@ -80,29 +129,65 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
               <p className="font-semibold text-xs text-[#191c1d]">{student.carrera}</p>
             </div>
           </div>
-          <div>
-            <span className="text-[10px] text-gray-400 font-bold uppercase">Nombre Completo</span>
-            <p className="font-semibold text-xs text-[#191c1d]">{student.nombre}</p>
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-100">
+            <div>
+              <span className="text-[10px] text-gray-400 font-bold uppercase">Nombre Completo</span>
+              <p className="font-semibold text-xs text-[#191c1d]">{student.nombre}</p>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-400 font-bold uppercase">Semestre Actual</span>
+              <p className="font-semibold text-xs text-[#012d1d] font-bold">{student.semestreActual}</p>
+            </div>
           </div>
         </div>
 
-        {/* Materia Registrada para Intersemestral */}
-        <div className="space-y-2">
-          <h5 className="font-bold text-xs text-[#191c1d]">Asignatura Solicitada</h5>
-          <div className="rounded-xl border border-gray-200 p-3 flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-[#aeeecb]/40 text-[#002114] font-mono text-[11px] font-semibold">
-                  INF-101
-                </span>
-                <span className="font-bold text-xs">Programación Básica</span>
-              </div>
-              <p className="text-[11px] text-gray-500">
-                Modalidad Intensiva (4 semanas) • Turno Matutino (08:00 - 12:00)
-              </p>
-            </div>
-            <span className="font-bold text-xs text-[#012d1d] shrink-0">5 Créditos</span>
+        {/* Materias Registradas para Intersemestral (Máximo 2) */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h5 className="font-bold text-xs text-[#191c1d]">
+              Asignaturas Solicitadas ({materias.length} / 2 permitidas)
+            </h5>
+            <span className="text-xs font-extrabold text-[#012d1d] bg-[#aeeecb]/30 px-2 py-0.5 rounded-md">
+              Total: {totalCreditos} Créditos
+            </span>
           </div>
+
+          <div className="space-y-2">
+            {materias.map((m) => (
+              <div
+                key={m.clave}
+                className="rounded-xl border border-gray-200 p-3 flex items-center justify-between bg-white shadow-2xs"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-[#aeeecb]/40 text-[#002114] font-mono text-[11px] font-semibold">
+                      {m.clave}
+                    </span>
+                    <span className="font-bold text-xs">{m.nombre}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    Modalidad Intensiva (4 semanas) • {m.dias || 'Lun a Vie'} ({m.horario || '08:00 - 12:00'}) • Aula: {m.aula || 'Edificio A'}
+                  </p>
+                  {m.profesor && (
+                    <p className="text-[10px] text-gray-400">
+                      Docente: <strong className="text-gray-600">{m.profesor}</strong>
+                    </p>
+                  )}
+                </div>
+                <span className="font-bold text-xs text-[#012d1d] shrink-0 ml-2">
+                  {m.creditos} Créditos
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cláusula TecNM de Conformidad */}
+        <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 text-[10px] text-amber-950 space-y-1">
+          <p className="font-bold">Conformidad con Lineamientos del TecNM:</p>
+          <p>
+            El alumno declara que las asignaturas seleccionadas corresponden estrictamente a su plan de estudios y están dentro del límite reglamentario de su semestre en curso ({student.semestreActual}).
+          </p>
         </div>
 
         {/* Sello Digital y Código QR */}
@@ -110,7 +195,7 @@ export const ComprobanteIntersemestralView: React.FC<ComprobanteIntersemestralVi
           <div className="space-y-1 max-w-[280px]">
             <span className="text-[10px] text-gray-400 font-bold uppercase">Cadena Digital de Seguridad</span>
             <p className="font-mono text-[9px] text-gray-600 break-all leading-tight">
-              SHA256: 7f8a9b2c3d4e5f60a1b2c3d4e5f67a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f
+              SHA256: {hash}
             </p>
           </div>
           <div className="w-14 h-14 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-700">

@@ -808,6 +808,26 @@
 
 ---
 
+<a name="mod-026"></a>
+### [MOD-026] Generación y Compilación de Diagramas Interactivos con Archify (OF-CDA, Stack Frontend & Offline, Backend & Lógica)
+- **Fecha:** 2026-09-21
+- **Archivos Creados:**
+  - `/Docs/diagramas/21-arquitectura-componentes-offline-first.json` y `21-arquitectura-componentes-offline-first.html`
+  - `/Docs/diagramas/22-stack-frontend-offline.json` y `22-stack-frontend-offline.html`
+  - `/Docs/diagramas/23-backend-logica.json` y `23-backend-logica.html`
+- **Archivo Modificado:**
+  - `/Docs/Documento Maestro de Arquitectura y Diagramación Técnica.md`
+- **Tipo de Cambio:** Modelado Formal de Arquitectura, Compilación Interactiva HTML Showcase (Archify 2.17.0) e Integración con Second Brain Auto-Logger.
+- **Requerimiento / Justificación:**
+  Formalización gráfica e interactiva de los 3 subsistemas centrales de la aplicación PWA:
+  1. **Arquitectura Guiada por Componentes Offline-First (OF-CDA):** Desacoplamiento Hexagonal Light entre átomos/moléculas, vistas, orquestador App.tsx, adaptadores y almacenamiento local IndexedDB con sincronización asíncrona.
+  2. **Stack Tecnológico Frontend & Motor Offline PWA:** Pila cliente conformada por React 18.3+, TypeScript 5.5+, Tailwind CSS 4.0+, Motion 12.0+, Lucide React, Vite 5.4+, Vite PWA/Workbox 0.20+ y Cache Storage.
+  3. **Backend & Capa de Lógica de Negocio:** Runtime Node.js con Express 4.x, pipeline de seguridad (CORS, CSP, Body Parser, Rate Limiting), controladores `/api/v1/*`, motor de reglas académicas y empaquetado esbuild a CJS.
+- **Validación Archify:**
+  Los 3 diagramas superaron el 100% de las 9 verificaciones formales bajo el perfil `showcase` (0 errores de composición, 0 advertencias, separación ortogonal estricta de carriles).
+
+---
+
 ### Resumen Consolidado de Validación y Métricas
 
 | Métrica de Compilación | Herramienta | Resultado | Observaciones |

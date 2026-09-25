@@ -8,7 +8,7 @@
 
 ### Catálogo Completo de Diagramas Baseline (20 Diagramas)
 
-#### Matriz de Artefactos Compilados en Archify (15 Diagramas Interactivos Showcase)
+#### Matriz de Artefactos Compilados en Archify (18 Diagramas Interactivos Showcase)
 > [!NOTE]
 > Todos los diagramas interactivos han sido compilados y congelados con el motor **Archify 2.17.0** bajo el perfil de calidad **Showcase** (cero cruces de líneas no autorizados, separación de carriles ortogonales, tipografía institucional y soporte nativo para temas claro/oscuro).
 
@@ -29,6 +29,9 @@
 | **Diag 17** | Topología de Red y Seguridad Perimetral | `architecture` | [17-network-perimeter-security.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/17-network-perimeter-security.html) | [17-network-perimeter-security.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/17-network-perimeter-security.json) |
 | **Diag 18** | Flujo de Pantallas de la SPA (Wireflow) | `workflow` | [18-screen-wireflow.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/18-screen-wireflow.html) | [18-screen-wireflow.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/18-screen-wireflow.json) |
 | **Diag 19** | Pipeline de CI/CD DevOps Automatizado | `workflow` | [19-cicd-devops-pipeline.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/19-cicd-devops-pipeline.html) | [19-cicd-devops-pipeline.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/19-cicd-devops-pipeline.json) |
+| **Diag 21** | Arquitectura Guiada por Componentes Offline-First | `architecture` | [21-arquitectura-componentes-offline-first.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/21-arquitectura-componentes-offline-first.html) | [21-arquitectura-componentes-offline-first.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/21-arquitectura-componentes-offline-first.json) |
+| **Diag 22** | Stack Tecnológico Frontend & Motor Offline | `architecture` | [22-stack-frontend-offline.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/22-stack-frontend-offline.html) | [22-stack-frontend-offline.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/22-stack-frontend-offline.json) |
+| **Diag 23** | Arquitectura Backend & Capa de Lógica de Negocio | `architecture` | [23-backend-logica.html](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/23-backend-logica.html) | [23-backend-logica.json](file:///c:/Users/User/Documents/GitHub/PWA%20Modulo%20Escolar%20TESChi/Docs/diagramas/23-backend-logica.json) |
 
 *Nota: Los diagramas 6, 7, 8, 10 y 20 se mantienen en su especificación declarativa textual nativa (UML Class, ERD Relacional, Casos de Uso y Cronogramas).*
 

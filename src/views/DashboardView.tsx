@@ -9,6 +9,7 @@ import {
   LogOut,
   ArrowRight,
   Clock,
+  BookOpen,
 } from 'lucide-react';
 import { StudentProfile } from '../types';
 
@@ -16,12 +17,14 @@ interface DashboardViewProps {
   student: StudentProfile;
   onNavigate: (view: string) => void;
   onLogout?: () => void;
+  onOpenCatalog?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   student,
   onNavigate,
   onLogout,
+  onOpenCatalog,
 }) => {
   return (
     <div className="relative min-h-[calc(100vh-64px)] pb-12 overflow-hidden">
@@ -168,19 +171,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               id="card-tramite-intersemestrales"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onNavigate('comprobante_intersemestral')}
+              onClick={() => onNavigate('intersemestrales')}
               className="text-left bg-white rounded-2xl p-5 border border-gray-100 shadow-xs hover:shadow-md transition flex flex-col justify-between min-h-[150px] group focus:outline-hidden focus:ring-2 focus:ring-[#1b4332]"
             >
-              <div className="w-11 h-11 rounded-xl bg-[#edeeef] text-[#414844] flex items-center justify-center mb-3">
+              <div className="w-11 h-11 rounded-xl bg-[#aeeecb]/40 text-[#002114] flex items-center justify-center mb-3">
                 <GraduationCap className="w-6 h-6" />
               </div>
               <div>
                 <h4 className="font-bold text-[#191c1d] text-base mb-2 group-hover:text-[#1b4332] transition">
                   Cursos Intersemestrales
                 </h4>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#edeeef] text-[#414844] text-xs font-medium">
-                  <Clock className="w-3.5 h-3.5 text-gray-500" />
-                  <span>Próximamente</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#aeeecb]/40 text-[#002114] text-xs font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#1b4332] animate-pulse"></span>
+                  <span>Abierto • Hasta {student.semestreActual}</span>
                 </div>
               </div>
             </motion.button>
@@ -207,6 +210,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </motion.button>
           </div>
+
+          {/* Banner Catálogo Curricular & Retícula de la Carrera */}
+          {onOpenCatalog && (
+            <motion.div
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={onOpenCatalog}
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-900/10 shadow-xs hover:shadow-md transition flex items-center justify-between cursor-pointer group"
+              role="button"
+              tabIndex={0}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#012d1d] text-[#aeeecb] flex items-center justify-center shrink-0">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#191c1d] text-sm sm:text-base group-hover:text-[#012d1d] transition">
+                    Catálogo Curricular & Retícula Oficial
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    Consulta el mapa curricular completo (1º a 9º Semestre), créditos, prerrequisitos y materias de {student.carrera}.
+                  </p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-1 text-xs font-bold text-[#012d1d] group-hover:translate-x-1 transition-transform shrink-0 ml-3">
+                <span>Ver Catálogo</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 

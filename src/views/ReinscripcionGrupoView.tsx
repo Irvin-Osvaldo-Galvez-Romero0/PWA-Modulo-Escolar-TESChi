@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, Info, ChevronDown, Check, Users, Clock } from 'lucide-react';
-import { GroupOption } from '../types';
+import { GroupOption, StudentProfile } from '../types';
+import { parseSemesterNumber } from '../utils/semesterHelper';
+import { normalizeCareer } from '../utils/careerHelper';
 
 interface ReinscripcionGrupoViewProps {
   groups: GroupOption[];
   selectedGroupId: string;
   onSelectGroup: (groupId: string) => void;
   onContinue: () => void;
+  student?: StudentProfile;
 }
 
 export const ReinscripcionGrupoView: React.FC<ReinscripcionGrupoViewProps> = ({
@@ -15,10 +18,28 @@ export const ReinscripcionGrupoView: React.FC<ReinscripcionGrupoViewProps> = ({
   selectedGroupId,
   onSelectGroup,
   onContinue,
+  student,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
+  const studentSemNum = student ? parseSemesterNumber(student.semestreActual) : 6;
+
+  // FILTRADO ESTRICTO: Solo mostrar grupos correspondientes a la carrera y semestre del estudiante
+  const eligibleGroups = groups.filter((g) => {
+    const matchSem = g.semestreNumero === studentSemNum;
+    const matchCareer = !student?.carrera || !g.carrera || normalizeCareer(g.carrera) === normalizeCareer(student.carrera);
+    return matchSem && matchCareer;
+  });
+  const displayGroups = eligibleGroups.length > 0 ? eligibleGroups : groups;
+
+  // Auto-seleccionar grupo válido de su semestre si el seleccionado actual no pertenece a sus grupos elegibles
+  React.useEffect(() => {
+    if (eligibleGroups.length > 0 && !eligibleGroups.some((g) => g.id === selectedGroupId)) {
+      onSelectGroup(eligibleGroups[0].id);
+    }
+  }, [eligibleGroups, selectedGroupId, onSelectGroup]);
+
+  const selectedGroup = displayGroups.find((g) => g.id === selectedGroupId) || displayGroups[0];
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col justify-between max-w-xl mx-auto px-5 py-6">
@@ -34,7 +55,7 @@ export const ReinscripcionGrupoView: React.FC<ReinscripcionGrupoViewProps> = ({
             Selecciona tu Grupo
           </h2>
           <p className="text-sm text-[#414844] leading-relaxed">
-            Elige el horario de grupo correspondiente a tu semestre. Esto determinará la distribución de tus asignaturas y aulas.
+            Elige el horario de grupo correspondiente a tu semestre ({student?.semestreActual || '6º Semestre'}). Esto determinará la distribución de tus asignaturas y aulas.
           </p>
         </div>
 
@@ -60,7 +81,7 @@ export const ReinscripcionGrupoView: React.FC<ReinscripcionGrupoViewProps> = ({
             <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </button>
 
-          {/* Menú Desplegable con opciones de Grupo */}
+          {/* Menú Desplegable con opciones de Grupo (exclusivamente del semestre del alumno) */}
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
@@ -68,7 +89,7 @@ export const ReinscripcionGrupoView: React.FC<ReinscripcionGrupoViewProps> = ({
               className="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-xl shadow-xl z-20 overflow-hidden"
             >
               <div className="p-1 space-y-1">
-                {groups.map((group) => {
+                {displayGroups.map((group) => {
                   const isSelected = group.id === selectedGroupId;
                   return (
                     <button

@@ -32,8 +32,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         return 'Kardex';
       case 'seguridad':
         return 'Seguridad';
+      case 'intersemestrales':
+        return 'Cursos Intersemestrales';
       case 'comprobante_intersemestral':
-        return 'Comprobante Intersemestral';
+        return 'Comprobante Intersemestral (FOR-002)';
       case 'calendario_escolar':
         return 'Calendario Escolar 2026-2027';
       default:

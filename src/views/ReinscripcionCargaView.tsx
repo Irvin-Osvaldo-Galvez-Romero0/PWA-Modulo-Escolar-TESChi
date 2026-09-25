@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Clock, User, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Course } from '../types';
 
 interface ReinscripcionCargaViewProps {
@@ -90,8 +90,8 @@ export const ReinscripcionCargaView: React.FC<ReinscripcionCargaViewProps> = ({
                   {isSelected && <CheckCircle2 className="w-4 h-4 fill-white text-[#1b4332]" />}
                 </div>
 
-                {/* Contenido de la Materia */}
-                <div className="flex-1 space-y-2">
+                {/* Contenido de la Materia: Exclusivamente Código, Nombre y Créditos */}
+                <div className="flex-1 space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded-full bg-[#aeeecb]/40 text-[#002114] text-xs font-semibold">
                       {course.clave}
@@ -101,22 +101,9 @@ export const ReinscripcionCargaView: React.FC<ReinscripcionCargaViewProps> = ({
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-[#191c1d] leading-snug">
+                  <h3 className="text-base sm:text-lg font-bold text-[#191c1d] leading-snug">
                     {course.nombre}
                   </h3>
-
-                  <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <User className="w-3.5 h-3.5 text-gray-400" />
-                    <span>{course.profesor}</span>
-                  </div>
-
-                  {/* Fila del horario estilo cápsula con fondo gris suave */}
-                  <div className="rounded-lg bg-[#f3f4f5] px-3 py-2 flex items-center gap-2 text-xs text-gray-700">
-                    <Clock className="w-4 h-4 text-gray-500 shrink-0" />
-                    <span>
-                      {course.dias} • {course.horario}
-                    </span>
-                  </div>
                 </div>
               </div>
             </motion.div>

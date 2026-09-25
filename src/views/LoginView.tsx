@@ -14,15 +14,16 @@ import {
 import { AuthService } from '../services/authService';
 import { BiometricsAdapter } from '../services/biometricsAdapter';
 import { TeschiLogo } from '../components/TeschiLogo';
+import { StudentProfile } from '../types';
 
 interface LoginViewProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (student: StudentProfile) => void;
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
-  // Estado del flujo de verificación
+  // Estado del flujo de verificación (Alumnos y Docentes - Conexión directa a API SIIA TESChi)
   const [step, setStep] = useState<'verify' | 'authenticate'>('verify');
-  const [matricula, setMatricula] = useState('202230129');
+  const [matricula, setMatricula] = useState('');
   const [studentInfo, setStudentInfo] = useState<{
     nombre?: string;
     carrera?: string;
@@ -33,7 +34,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   // Métodos de autenticación
   const [activeMethod, setActiveMethod] = useState<'password' | 'pin'>('password');
-  const [password, setPassword] = useState('Teschi2024*');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [pin, setPin] = useState('');
 
@@ -76,7 +77,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, activeMethod, pin]);
 
-  // Paso 1: Verificación de Matrícula (POST /api/v1/auth/verify-student)
+  // Paso 1: Verificación de Matrícula o Usuario Institucional (POST /api/v1/auth/verify-student)
   const handleVerifyMatricula = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg(null);
@@ -84,7 +85,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
     const clean = matricula.trim();
     if (!clean) {
-      setErrorMsg('Ingresa tu matrícula o número de control.');
+      setErrorMsg('Ingresa tu matrícula o usuario institucional.');
       return;
     }
 
@@ -96,11 +97,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       const methods = (result.registeredMethods || []).filter((m) => m !== 'biometric');
       const availableMethods = methods.length ? methods : ['password', 'pin'];
       setStudentInfo({
-        nombre: result.nombre || 'Alejandro Ruiz',
-        carrera: result.carrera || 'Ingeniería en Sistemas Computacionales',
+        nombre: result.nombre || '',
+        carrera: result.carrera || 'Comunidad Académica TESChi',
         registeredMethods: availableMethods,
       });
-      // Seleccionar el primer método registrado
+      // Seleccionar contraseña por defecto para validación con el SIIA
       if (availableMethods.includes('password')) {
         setActiveMethod('password');
       } else {
@@ -109,7 +110,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       setStep('authenticate');
       BiometricsAdapter.triggerHaptic([30, 40]);
     } else {
-      setErrorMsg(result.message || 'Matrícula no localizada en el sistema de control escolar.');
+      setErrorMsg(result.message || 'Matrícula o usuario no localizado en el sistema escolar.');
       BiometricsAdapter.triggerHaptic([100, 50, 100]);
     }
   };
@@ -124,10 +125,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const result = await AuthService.authenticatePassword(matricula, password);
     setLoading(false);
 
-    if (result.success) {
-      setSuccessNotice('Acceso autorizado');
+    if (result.success && result.student) {
+      setSuccessNotice(`Bienvenido, ${result.student.nombreCorto || result.student.nombre}`);
       BiometricsAdapter.triggerHaptic([40, 50, 60]);
-      setTimeout(() => onLoginSuccess(), 400);
+      setTimeout(() => onLoginSuccess(result.student), 400);
     } else {
       setErrorMsg(result.message);
       BiometricsAdapter.triggerHaptic([80, 50, 80]);
@@ -159,10 +160,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     const result = await AuthService.authenticatePin(matricula, pinValue);
     setLoading(false);
 
-    if (result.success) {
-      setSuccessNotice('PIN verificado con éxito');
+    if (result.success && result.student) {
+      setSuccessNotice(`Bienvenido, ${result.student.nombreCorto || result.student.nombre}`);
       BiometricsAdapter.triggerHaptic([30, 50, 40]);
-      setTimeout(() => onLoginSuccess(), 400);
+      setTimeout(() => onLoginSuccess(result.student), 400);
     } else {
       setErrorMsg(result.message);
       setPin('');
@@ -207,11 +208,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {/* Indicador de Acceso Exclusivo para Alumnos */}
+        {/* Indicador Institucional Alumnos - Conexión API Activa */}
         <div className="flex items-center justify-center">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f0f3f1] text-[#012d1d] text-xs font-semibold border border-gray-200">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f0f3f1] text-[#012d1d] text-xs font-semibold border border-gray-200">
             <GraduationCap className="w-4 h-4 text-[#1b4332]" />
-            <span>Acceso Exclusivo Alumnos</span>
+            <span>Padrón de Alumnos • Ciencias Básicas</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="API Conectada"></span>
           </div>
         </div>
 
@@ -244,9 +246,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-gray-700">
-                    Matrícula / Número de Control
+                    Matrícula o Usuario Institucional
                   </label>
-                  <span className="text-[10px] text-gray-400 font-mono">Ej. 202230129</span>
+                  <span className="text-[10px] text-gray-400 font-mono">Alumnos / Docentes</span>
                 </div>
                 <div className="relative">
                   <input
@@ -254,7 +256,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     type="text"
                     value={matricula}
                     onChange={(e) => setMatricula(e.target.value)}
-                    placeholder="202230129"
+                    placeholder="Ej. 2022452139 o usuario docente"
                     className="w-full bg-[#f8f9fa] border border-gray-300 rounded-xl px-4 py-3 text-sm font-semibold text-[#191c1d] tracking-wider focus:border-[#012d1d] focus:ring-2 focus:ring-[#012d1d]/20 focus:outline-hidden transition"
                     required
                   />
@@ -275,13 +277,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 disabled={loading}
                 className="w-full py-3.5 bg-[#012d1d] hover:bg-[#1b4332] text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                <span>{loading ? 'Verificando en padrón escolar...' : 'Continuar con Matrícula'}</span>
+                <span>{loading ? 'Verificando con SIIA TESChi...' : 'Continuar con Credenciales'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <p className="text-[11px] text-center text-gray-400">
-                Presiona <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-gray-100 border border-gray-300 rounded">Enter ↵</kbd> para verificar credenciales.
-              </p>
+              <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-gray-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Conexión institucional con servidor SIIA TESChi</span>
+              </div>
             </motion.form>
           ) : (
             /* FASE 2: Selección de Método de Autenticación */
@@ -297,10 +300,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                    <p className="text-xs font-bold text-[#012d1d]">{studentInfo.nombre}</p>
+                    <p className="text-xs font-bold text-[#012d1d]">
+                      {studentInfo.nombre || 'Estudiante TESChi'}
+                    </p>
                   </div>
                   <p className="text-[11px] text-gray-500 font-mono">
-                    Matrícula: {matricula} • {studentInfo.carrera}
+                    Matrícula: {matricula} • {studentInfo.carrera || 'Comunidad Académica TESChi'}
                   </p>
                 </div>
                 <button
@@ -308,6 +313,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   onClick={() => {
                     BiometricsAdapter.triggerHaptic(20);
                     setStep('verify');
+                    setPassword('');
                     setErrorMsg(null);
                   }}
                   className="text-xs text-[#012d1d] hover:underline font-semibold flex items-center gap-1 shrink-0 p-1"
@@ -391,7 +397,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     className="w-full py-3.5 bg-[#012d1d] hover:bg-[#1b4332] text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2"
                   >
                     <Lock className="w-4 h-4" />
-                    <span>{loading ? 'Validando...' : 'Iniciar Sesión'}</span>
+                    <span>{loading ? 'Validando con SIIA TESChi...' : 'Iniciar Sesión'}</span>
                   </button>
                 </form>
               )}

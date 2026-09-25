@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura Backend & Capa de Lógica de Negocio",
+    "subtitle": "Servidor Node.js Express, endpoints REST /api/v1/*, empaquetado esbuild y gobernanza transaccional (ISO/IEC 25010 & 27001)",
+    "output": "23-backend-logica.html",
+    "viewBox": [
+      1200,
+      520
+    ],
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "view-pipeline-middleware",
+        "label": "Pipeline de Middleware & Seguridad",
+        "focus": [
+          "node_runtime",
+          "express_app",
+          "cors_security",
+          "body_parser",
+          "rate_limiter"
+        ],
+        "note": "Filtrado de peticiones y controles de seguridad perimetral ISO 27001."
+      },
+      {
+        "id": "view-controladores-logica",
+        "label": "Controladores REST & Reglas Académicas",
+        "focus": [
+          "auth_controller",
+          "academic_controller",
+          "reinscripcion_ctrl",
+          "academic_rules",
+          "mock_db_core"
+        ],
+        "note": "Procesamiento de trámites, cálculo de créditos y validación de prerrequisitos."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "node_runtime",
+      "type": "backend",
+      "label": "Node.js Runtime",
+      "sublabel": "v18+ LTS Engine",
+      "tag": "Runtime Base",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "express_app",
+      "type": "backend",
+      "label": "Express 4.x Server",
+      "sublabel": "server.ts puerto unificado :3000",
+      "tag": "Servidor REST",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "esbuild_tool",
+      "type": "backend",
+      "label": "esbuild Bundler",
+      "sublabel": "Compila dist/server.cjs (<100ms)",
+      "tag": "Build Engine",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "cors_security",
+      "type": "security",
+      "label": "CORS & Headers",
+      "sublabel": "Aislamiento CSP & OWASP",
+      "tag": "Seguridad HTTP",
+      "pos": [
+        350,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "body_parser",
+      "type": "backend",
+      "label": "Body Parser JSON",
+      "sublabel": "Saneamiento y tipado de payloads",
+      "tag": "Middleware Core",
+      "pos": [
+        350,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "rate_limiter",
+      "type": "security",
+      "label": "Rate Limiting",
+      "sublabel": "Control de concurrencia y DoS",
+      "tag": "Protección Tráfico",
+      "pos": [
+        350,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "auth_controller",
+      "type": "security",
+      "label": "Auth Controller",
+      "sublabel": "/api/v1/auth/login & pin",
+      "tag": "Control Acceso",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "academic_controller",
+      "type": "backend",
+      "label": "Academic Controller",
+      "sublabel": "/api/v1/academic/kardex & profile",
+      "tag": "Expediente Escolar",
+      "pos": [
+        640,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "reinscripcion_ctrl",
+      "type": "backend",
+      "label": "Reinscripción Controller",
+      "sublabel": "/api/v1/academic/reinscripcion",
+      "tag": "Trámite Crítico",
+      "pos": [
+        640,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "mock_db_core",
+      "type": "database",
+      "label": "Mock Data Store",
+      "sublabel": "Modelos Académicos en Memoria",
+      "tag": "Almacén Primario",
+      "pos": [
+        930,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "academic_rules",
+      "type": "backend",
+      "label": "Motor de Reglas",
+      "sublabel": "Cupos, créditos y materias",
+      "tag": "Lógica Negocio",
+      "pos": [
+        930,
+        190
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "static_spa",
+      "type": "cloud",
+      "label": "SPA Static Server",
+      "sublabel": "Entrega dist/ assets para PWA",
+      "tag": "Entrega Cliente",
+      "pos": [
+        930,
+        320
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Capa Runtime & Servidor Base",
+      "wraps": [
+        "node_runtime",
+        "express_app",
+        "esbuild_tool"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Capa de Middleware & Seguridad Perimetral",
+      "wraps": [
+        "cors_security",
+        "body_parser",
+        "rate_limiter"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Controladores REST & Núcleo Lógico",
+      "wraps": [
+        "auth_controller",
+        "academic_controller",
+        "reinscripcion_ctrl",
+        "mock_db_core",
+        "academic_rules",
+        "static_spa"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_node_express",
+      "from": "node_runtime",
+      "to": "express_app",
+      "label": "ejecuta runtime",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_express_esbuild",
+      "from": "express_app",
+      "to": "esbuild_tool",
+      "label": "compila CJS",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_express_body",
+      "from": "express_app",
+      "to": "body_parser",
+      "label": "pipeline HTTP",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_cors_body",
+      "from": "cors_security",
+      "to": "body_parser",
+      "label": "filtro cabeceras",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_body_limiter",
+      "from": "body_parser",
+      "to": "rate_limiter",
+      "label": "control cuotas",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    },
+    {
+      "id": "conn_cors_auth",
+      "from": "cors_security",
+      "to": "auth_controller",
+      "label": "handshake seguro",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_body_academic",
+      "from": "body_parser",
+      "to": "academic_controller",
+      "label": "despacho REST",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_limiter_reinscripcion",
+      "from": "rate_limiter",
+      "to": "reinscripcion_ctrl",
+      "label": "tráfico controlado",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_auth_db",
+      "from": "auth_controller",
+      "to": "mock_db_core",
+      "label": "valida matrícula",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_academic_rules",
+      "from": "academic_controller",
+      "to": "academic_rules",
+      "label": "evalúa historial",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_rules_db",
+      "from": "academic_rules",
+      "to": "mock_db_core",
+      "label": "consulta cupos",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelDy": -20
+    },
+    {
+      "id": "conn_reinscripcion_spa",
+      "from": "reinscripcion_ctrl",
+      "to": "static_spa",
+      "label": "emite comprobante",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "conn_rules_spa",
+      "from": "academic_rules",
+      "to": "static_spa",
+      "label": "carga materias",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 20
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Seguridad & Filtrado",
+      "items": [
+        "Aislamiento de cabeceras CORS y políticas CSP conforme a ISO/IEC 27001",
+        "Rate limiting por IP para mitigar saturación y ataques de fuerza bruta",
+        "Validación defensiva de payloads JSON entrantes"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Lógica Académica & Ejecución",
+      "items": [
+        "Endpoints REST /api/v1/* de autenticación, kardex y reinscripción modular",
+        "Motor de reglas de negocio para cálculo de créditos y validación de cupos",
+        "Compilación ultraligera CJS con esbuild para despliegue serverless o Cloud Run"
+      ]
+    }
+  ]
+}
