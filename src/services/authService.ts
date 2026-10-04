@@ -24,6 +24,7 @@ export class AuthService {
     matricula?: string;
     nombre?: string;
     carrera?: string;
+    tieneNip?: boolean;
     message?: string;
   }> {
     const cleanMatricula = matricula.trim();
@@ -36,51 +37,51 @@ export class AuthService {
     }
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        const res = await fetch('/api/v1/auth/verify-student', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ matricula: cleanMatricula }),
-        });
-        const data = await res.json();
-        if (res.ok && data.exists) {
-          return data;
-        }
+      const res = await fetch('/api/v1/auth/verify-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matricula: cleanMatricula }),
+      });
+      const data = await res.json();
+      if (res.ok && data.exists) {
+        return {
+          exists: true,
+          registeredMethods: data.registeredMethods || ['password', 'pin'],
+          matricula: data.matricula || cleanMatricula,
+          nombre: data.nombre || '',
+          carrera: data.carrera || '',
+          tieneNip: Boolean(data.tieneNip),
+          message: data.message,
+        };
       }
-    } catch {
-      // Fallback offline
-    }
-
-    // Validación offline con detección dinámica de carrera
-    if (cleanMatricula.length >= 3) {
-      const studentMap: Record<string, { nombre: string; carrera: string }> = {
-        '2022222103': { nombre: 'Hernández Martínez, Daniela', carrera: 'Licenciatura en Administración' },
-        '2022452167': { nombre: 'Mishelle Stefania', carrera: 'Ingeniería en Sistemas Computacionales' },
-        '2022452139': { nombre: 'Irvin Osvaldo Gálvez Romero', carrera: 'Ingeniería en Sistemas Computacionales' },
-        '2023450412': { nombre: 'Morales Ruiz, Fernando', carrera: 'Ingeniería en Sistemas Computacionales' },
-      };
-      const found = studentMap[cleanMatricula];
-      const detected = detectCareerFromMatricula(cleanMatricula);
       return {
-        exists: true,
-        matricula: cleanMatricula,
-        nombre: found ? found.nombre : '',
-        carrera: found ? found.carrera : detected.carrera,
-        registeredMethods: ['password', 'pin'],
+        exists: false,
+        registeredMethods: [],
+        message: data.message || 'Matrícula o usuario no localizado en el sistema escolar.',
+      };
+    } catch (err: any) {
+      return {
+        exists: false,
+        registeredMethods: [],
+        message: 'Error al contactar el servicio escolar: ' + (err.message || ''),
       };
     }
-
-    return {
-      exists: false,
-      registeredMethods: [],
-      message: 'Matrícula o usuario no encontrado en el sistema institucional.',
-    };
   }
 
   /**
-   * Valida la autenticación con PIN de seguridad
+   * Valida la autenticación con NIP Institucional contra la API oficial del SIIA TESChi
+   * Swagger: POST /nip.ashx (accion: 'verificar')
    */
-  public static async authenticatePin(matricula: string, pin: string): Promise<{ success: boolean; message: string; student?: StudentProfile }> {
+  public static async authenticateNip(
+    param1: string | { matricula?: string; nip: string },
+    param2?: string
+  ): Promise<{
+    success: boolean;
+    message: string;
+    student?: StudentProfile;
+    token?: string;
+    usuario?: any;
+  }> {
     const lockout = await this.checkLockout();
     if (lockout.locked) {
       return {
@@ -89,105 +90,150 @@ export class AuthService {
       };
     }
 
-    if (pin.trim().length >= 4) {
-      await this.resetFailedAttempts();
-      const cleanMatricula = matricula.trim();
+    let matricula = '';
+    let nip = '';
 
-      // Consultar y sincronizar sesión activa con el backend o caché local
-      let studentProfile = await StorageAdapter.getItem<StudentProfile>('teschi_student');
-      if (!studentProfile || studentProfile.matricula !== cleanMatricula) {
-        if (cleanMatricula === '2022222103') {
-          studentProfile = {
-            matricula: '2022222103',
-            nombre: 'Hernández Martínez, Daniela',
-            nombreCorto: 'Daniela',
-            carrera: 'Licenciatura en Administración',
-            periodoActual: 'Septiembre - Enero 2026-2027',
-            semestreActual: '6º Semestre',
-            promedioGeneral: 9.5,
-            creditosAcumulados: 170,
-            creditosTotales: 260,
-            avancePorcentaje: 65,
-            avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250',
-            email: '2022222103@teschi.edu.mx',
-            status: 'regular' as const,
-            biometricsRegistered: true,
-          };
-          await StorageAdapter.setItem('teschi_student', studentProfile);
-        } else if (cleanMatricula === '2022452167') {
-          studentProfile = {
-            matricula: '2022452167',
-            nombre: 'Mishelle Stefania',
-            nombreCorto: 'Mishelle',
-            carrera: 'Ingeniería en Sistemas Computacionales',
-            periodoActual: 'Septiembre - Enero 2026-2027',
-            semestreActual: '6º Semestre',
-            promedioGeneral: 9.3,
-            creditosAcumulados: 172,
-            creditosTotales: 260,
-            avancePorcentaje: 66,
-            avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250',
-            email: '2022452167@teschi.edu.mx',
-            status: 'regular' as const,
-            biometricsRegistered: true,
-          };
-          await StorageAdapter.setItem('teschi_student', studentProfile);
-        } else if (cleanMatricula === '2022452139') {
-          studentProfile = {
-            matricula: '2022452139',
-            nombre: 'Irvin Osvaldo Gálvez Romero',
-            nombreCorto: 'Irvin Gálvez',
-            carrera: 'Ingeniería en Sistemas Computacionales',
-            periodoActual: 'Septiembre - Enero 2026-2027',
-            semestreActual: '9º Semestre',
-            promedioGeneral: 9.6,
-            creditosAcumulados: 235,
-            creditosTotales: 260,
-            avancePorcentaje: 90,
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-            email: '2022452139@teschi.edu.mx',
-            status: 'regular' as const,
-            biometricsRegistered: true,
-          };
-          await StorageAdapter.setItem('teschi_student', studentProfile);
-        } else if (cleanMatricula === '2023450412') {
-          studentProfile = {
-            matricula: '2023450412',
-            nombre: 'Morales Ruiz, Fernando',
-            nombreCorto: 'Fernando Morales',
-            carrera: 'Ingeniería en Sistemas Computacionales',
-            periodoActual: 'Septiembre - Enero 2026-2027',
-            semestreActual: '4º Semestre',
-            promedioGeneral: 9.1,
-            creditosAcumulados: 108,
-            creditosTotales: 260,
-            avancePorcentaje: 41,
-            avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
-            email: '2023450412@teschi.edu.mx',
-            status: 'regular' as const,
-            biometricsRegistered: true,
-          };
-          await StorageAdapter.setItem('teschi_student', studentProfile);
-        } else {
-          return {
-            success: false,
-            message: 'Para iniciar por primera vez con esta cuenta, debes usar tu Contraseña Institucional.',
-          };
-        }
-      }
+    if (typeof param1 === 'string') {
+      matricula = param1.trim();
+      nip = (param2 || '').trim();
+    } else {
+      matricula = (param1.matricula || '').trim();
+      nip = (param1.nip || '').trim();
+    }
 
+    if (!nip) {
       return {
-        success: true,
-        message: 'Acceso autorizado con PIN de seguridad.',
-        student: studentProfile,
+        success: false,
+        message: 'Por favor, ingresa tu NIP institucional de 4 dígitos.',
       };
     }
 
-    const attempts = await this.recordFailedAttempt();
-    return {
-      success: false,
-      message: `PIN no válido. Intento ${attempts} de 5 antes del bloqueo.`,
-    };
+    if (nip.length !== 4 || !/^\d{4}$/.test(nip)) {
+      return {
+        success: false,
+        message: 'El NIP institucional debe contener exactamente 4 dígitos numéricos.',
+      };
+    }
+
+    try {
+      const res = await fetch('/api/v1/auth/nip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accion: 'verificar',
+          matricula,
+          usuario: matricula,
+          nip,
+          pin: nip,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        await this.resetFailedAttempts();
+
+        if (data.token) {
+          await StorageAdapter.setItem('teschi_siia_token', data.token);
+        }
+        if (data.usuario) {
+          await StorageAdapter.setItem('teschi_siia_user', data.usuario);
+        }
+        if (data.student) {
+          await StorageAdapter.setItem('teschi_student', data.student);
+        }
+
+        return {
+          success: true,
+          message: data.message || 'Acceso autorizado con NIP institucional.',
+          student: data.student,
+          token: data.token,
+          usuario: data.usuario,
+        };
+      }
+
+      const attempts = await this.recordFailedAttempt();
+      return {
+        success: false,
+        message: data.message || `NIP incorrecto en el sistema escolar. Intento ${attempts} de 5 antes del bloqueo.`,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: 'Error al contactar con el servidor escolar: ' + (err.message || ''),
+      };
+    }
+  }
+
+  /**
+   * Configura un nuevo NIP institucional de 4 dígitos para usuarios primerizos
+   * Swagger: POST /nip.ashx (accion: 'configurar')
+   */
+  public static async configureNip(params: {
+    tempToken: string;
+    nuevoNip: string;
+    confirmarNip: string;
+    matricula?: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    student?: StudentProfile;
+    token?: string;
+  }> {
+    try {
+      const res = await fetch('/api/v1/auth/nip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accion: 'configurar',
+          tempToken: params.tempToken,
+          nuevoNip: params.nuevoNip,
+          confirmarNip: params.confirmarNip,
+          usuario: params.matricula,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (data.token) {
+          await StorageAdapter.setItem('teschi_siia_token', data.token);
+        }
+        if (data.usuario) {
+          await StorageAdapter.setItem('teschi_siia_user', data.usuario);
+        }
+        if (data.student) {
+          await StorageAdapter.setItem('teschi_student', data.student);
+        }
+
+        return {
+          success: true,
+          message: data.message || 'NIP institucional configurado exitosamente.',
+          student: data.student,
+          token: data.token,
+        };
+      }
+
+      return {
+        success: false,
+        message: data.message || 'No fue posible registrar el nuevo NIP.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: 'Error de conexión con el servidor escolar: ' + (err.message || ''),
+      };
+    }
+  }
+
+  /**
+   * Alias de compatibilidad para autenticación con PIN / NIP
+   */
+  public static async authenticatePin(
+    matricula: string,
+    pin: string
+  ): Promise<{ success: boolean; message: string; student?: StudentProfile; token?: string; usuario?: any }> {
+    return this.authenticateNip(matricula, pin);
   }
 
   /**
@@ -344,7 +390,13 @@ export class AuthService {
   public static async authenticatePassword(
     matricula: string,
     password: string
-  ): Promise<{ success: boolean; message: string; student?: StudentProfile }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    student?: StudentProfile;
+    token?: string;
+    usuario?: any;
+  }> {
     const lockout = await this.checkLockout();
     if (lockout.locked) {
       return {
@@ -362,149 +414,47 @@ export class AuthService {
     }
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        const res = await fetch('/api/v1/auth/login-student', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ matricula: cleanMatricula, password }),
-        });
+      const res = await fetch('/api/v1/auth/login-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matricula: cleanMatricula,
+          usuario: cleanMatricula,
+          password,
+        }),
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (res.ok && data.success && data.student) {
-          await this.resetFailedAttempts();
+      if (res.ok && data.success && data.student) {
+        await this.resetFailedAttempts();
 
-          if (data.token) {
-            await StorageAdapter.setItem('teschi_siia_token', data.token);
-          }
-          if (data.usuario) {
-            await StorageAdapter.setItem('teschi_siia_user', data.usuario);
-          }
-          await StorageAdapter.setItem('teschi_student', data.student);
-
-          return {
-            success: true,
-            message: data.message || 'Acceso autorizado correctamente.',
-            student: data.student,
-          };
-        } else {
-          const attempts = await this.recordFailedAttempt();
-          return {
-            success: false,
-            message: data.message || `Usuario o contraseña incorrectos. Intento ${attempts} de 5 antes del bloqueo.`,
-          };
+        if (data.token) {
+          await StorageAdapter.setItem('teschi_siia_token', data.token);
         }
-      } else {
-        const isRegistered = (cleanMatricula === '2022222103' && (password === 'Teschi2024*' || password === '2022222103')) ||
-                             (cleanMatricula === '2022452167' && (password === 'Teschi2024*' || password === '2022452167')) ||
-                             (cleanMatricula === '2022452139' && (password === 'Teschi2024*' || password === '2022452139')) ||
-                             (cleanMatricula === '2023450412' && (password === 'Teschi2024*' || password === '2023450412'));
-        if (isRegistered) {
-          await this.resetFailedAttempts();
-          let demoProfile = {
-            matricula: cleanMatricula,
-            nombre: 'Estudiante TESChi',
-            nombreCorto: 'Estudiante',
-            carrera: 'Licenciatura en Administración',
-            periodoActual: 'Septiembre - Enero 2026-2027',
-            semestreActual: '6º Semestre',
-            promedioGeneral: 9.5,
-            creditosAcumulados: 170,
-            creditosTotales: 260,
-            avancePorcentaje: 65,
-            avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250',
-            email: `${cleanMatricula}@teschi.edu.mx`,
-            status: 'regular' as const,
-            biometricsRegistered: true,
-          };
-
-          if (cleanMatricula === '2022222103') {
-            demoProfile = {
-              matricula: '2022222103',
-              nombre: 'Hernández Martínez, Daniela',
-              nombreCorto: 'Daniela',
-              carrera: 'Licenciatura en Administración',
-              periodoActual: 'Septiembre - Enero 2026-2027',
-              semestreActual: '6º Semestre',
-              promedioGeneral: 9.5,
-              creditosAcumulados: 170,
-              creditosTotales: 260,
-              avancePorcentaje: 65,
-              avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250',
-              email: '2022222103@teschi.edu.mx',
-              status: 'regular' as const,
-              biometricsRegistered: true,
-            };
-          } else if (cleanMatricula === '2022452167') {
-            demoProfile = {
-              matricula: '2022452167',
-              nombre: 'Mishelle Stefania',
-              nombreCorto: 'Mishelle',
-              carrera: 'Ingeniería en Sistemas Computacionales',
-              periodoActual: 'Septiembre - Enero 2026-2027',
-              semestreActual: '6º Semestre',
-              promedioGeneral: 9.3,
-              creditosAcumulados: 172,
-              creditosTotales: 260,
-              avancePorcentaje: 66,
-              avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250',
-              email: '2022452167@teschi.edu.mx',
-              status: 'regular' as const,
-              biometricsRegistered: true,
-            };
-          } else if (cleanMatricula === '2022452139') {
-            demoProfile = {
-              matricula: '2022452139',
-              nombre: 'Irvin Osvaldo Gálvez Romero',
-              nombreCorto: 'Irvin Gálvez',
-              carrera: 'Ingeniería en Sistemas Computacionales',
-              periodoActual: 'Septiembre - Enero 2026-2027',
-              semestreActual: '9º Semestre',
-              promedioGeneral: 9.6,
-              creditosAcumulados: 235,
-              creditosTotales: 260,
-              avancePorcentaje: 90,
-              avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-              email: '2022452139@teschi.edu.mx',
-              status: 'regular' as const,
-              biometricsRegistered: true,
-            };
-          } else if (cleanMatricula === '2023450412') {
-            demoProfile = {
-              matricula: '2023450412',
-              nombre: 'Morales Ruiz, Fernando',
-              nombreCorto: 'Fernando Morales',
-              carrera: 'Ingeniería en Sistemas Computacionales',
-              periodoActual: 'Septiembre - Enero 2026-2027',
-              semestreActual: '4º Semestre',
-              promedioGeneral: 9.1,
-              creditosAcumulados: 108,
-              creditosTotales: 260,
-              avancePorcentaje: 41,
-              avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
-              email: '2023450412@teschi.edu.mx',
-              status: 'regular' as const,
-              biometricsRegistered: true,
-            };
-          }
-
-          await StorageAdapter.setItem('teschi_student', demoProfile);
-          return {
-            success: true,
-            message: 'Acceso autorizado al portal escolar.',
-            student: demoProfile,
-          };
+        if (data.usuario) {
+          await StorageAdapter.setItem('teschi_siia_user', data.usuario);
         }
+        await StorageAdapter.setItem('teschi_student', data.student);
 
         return {
-          success: false,
-          message: 'Sin conexión a internet. La autenticación con el servidor SIIA requiere conexión activa.',
+          success: true,
+          message: data.message || 'Acceso autorizado correctamente.',
+          student: data.student,
+          token: data.token,
+          usuario: data.usuario,
         };
       }
+
+      const attempts = await this.recordFailedAttempt();
+      return {
+        success: false,
+        message: data.message || `Usuario o contraseña incorrectos. Intento ${attempts} de 5 antes del bloqueo.`,
+      };
     } catch (err: any) {
       return {
         success: false,
-        message: 'No fue posible validar credenciales con el servidor central: ' + (err.message || ''),
+        message: 'Error de comunicación con el servidor central SIIA TESChi: ' + (err.message || ''),
       };
     }
   }
@@ -532,6 +482,9 @@ export class AuthService {
         remainingSeconds: Math.ceil((lockoutUntil - now) / 1000),
       };
     }
+    if (lockoutUntil > 0 && lockoutUntil <= now) {
+      await this.resetFailedAttempts();
+    }
     return { locked: false, remainingSeconds: 0 };
   }
 
@@ -550,5 +503,9 @@ export class AuthService {
   public static async resetFailedAttempts(): Promise<void> {
     await StorageAdapter.removeItem(this.FAILED_ATTEMPTS_KEY);
     await StorageAdapter.removeItem(this.LOCKOUT_TIME_KEY);
+  }
+
+  public static async clearLockout(): Promise<void> {
+    await this.resetFailedAttempts();
   }
 }

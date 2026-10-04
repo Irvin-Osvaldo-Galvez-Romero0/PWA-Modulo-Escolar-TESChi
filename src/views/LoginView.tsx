@@ -28,9 +28,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     nombre?: string;
     carrera?: string;
     registeredMethods: string[];
+    tieneNip?: boolean;
   }>({
     registeredMethods: ['password', 'pin'],
   });
+
+  // Tokens temporales del SIIA (Paso 1 -> Paso 2)
+  const [tempToken, setTempToken] = useState<string | null>(null);
 
   // Métodos de autenticación
   const [activeMethod, setActiveMethod] = useState<'password' | 'pin'>('password');
@@ -45,20 +49,76 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const matriculaInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+  const pinInputRef = useRef<HTMLInputElement>(null);
+  const pinRef = useRef<string>('');
+  const isSubmittingPinRef = useRef<boolean>(false);
+  const pinSubmitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (step === 'verify' && matriculaInputRef.current) {
       matriculaInputRef.current.focus();
-    } else if (step === 'authenticate' && activeMethod === 'password' && passwordInputRef.current) {
-      passwordInputRef.current.focus();
+    } else if (step === 'authenticate') {
+      if (activeMethod === 'password' && passwordInputRef.current) {
+        passwordInputRef.current.focus();
+      } else if (activeMethod === 'pin' && pinInputRef.current) {
+        pinInputRef.current.focus();
+      }
     }
   }, [step, activeMethod]);
 
-  // Manejo de teclado físico para el PIN cuando el método PIN está activo
+  // Actualización reactiva e inmediata del PIN
+  const updatePin = (newVal: string) => {
+    if (loading || isSubmittingPinRef.current) return;
+    const sanitized = newVal.replace(/\D/g, '').slice(0, 4);
+    setPin(sanitized);
+    pinRef.current = sanitized;
+    setErrorMsg(null);
+    BiometricsAdapter.triggerHaptic(20);
+
+    if (pinSubmitTimeoutRef.current) {
+      clearTimeout(pinSubmitTimeoutRef.current);
+      pinSubmitTimeoutRef.current = null;
+    }
+
+    if (sanitized.length === 4) {
+      pinSubmitTimeoutRef.current = setTimeout(() => {
+        triggerPinLogin(sanitized);
+      }, 150);
+    }
+  };
+
+  const handlePinDigit = (digit: string) => {
+    if (pinRef.current.length < 4) {
+      updatePin(pinRef.current + digit);
+    }
+  };
+
+  const handlePinBackspace = () => {
+    if (pinRef.current.length > 0) {
+      updatePin(pinRef.current.slice(0, -1));
+    }
+  };
+
+  // Manejo de teclado físico y eventos globales para el PIN
   useEffect(() => {
     if (step !== 'authenticate' || activeMethod !== 'pin') return;
 
+    const timer = setTimeout(() => pinInputRef.current?.focus(), 60);
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Si el foco está en el input nativo invisible, dejamos que onChange procese
+      if (document.activeElement === pinInputRef.current) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (pinRef.current.length === 4) {
+            triggerPinLogin(pinRef.current);
+          } else {
+            setErrorMsg('Ingresa los 4 dígitos de tu NIP institucional.');
+          }
+        }
+        return;
+      }
+
       if (/^[0-9]$/.test(e.key)) {
         e.preventDefault();
         handlePinDigit(e.key);
@@ -67,20 +127,29 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         handlePinBackspace();
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (pin.length >= 4) {
-          handlePinSubmit();
+        if (pinRef.current.length === 4) {
+          triggerPinLogin(pinRef.current);
+        } else {
+          setErrorMsg('Ingresa los 4 dígitos de tu NIP institucional.');
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [step, activeMethod, pin]);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (pinSubmitTimeoutRef.current) {
+        clearTimeout(pinSubmitTimeoutRef.current);
+      }
+    };
+  }, [step, activeMethod]);
 
-  // Paso 1: Verificación de Matrícula o Usuario Institucional (POST /api/v1/auth/verify-student)
+  // Paso 1: Verificación de Matrícula o Usuario Institucional (GET /nip.ashx?usuario={usuario})
   const handleVerifyMatricula = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg(null);
+    setSuccessNotice(null);
     BiometricsAdapter.triggerHaptic(30);
 
     const clean = matricula.trim();
@@ -100,13 +169,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         nombre: result.nombre || '',
         carrera: result.carrera || 'Comunidad Académica TESChi',
         registeredMethods: availableMethods,
+        tieneNip: result.tieneNip,
       });
-      // Seleccionar contraseña por defecto para validación con el SIIA
-      if (availableMethods.includes('password')) {
-        setActiveMethod('password');
-      } else {
-        setActiveMethod('pin');
-      }
+      setTempToken(null);
+      setPassword('');
+      setPin('');
+      pinRef.current = '';
+      setActiveMethod('password');
       setStep('authenticate');
       BiometricsAdapter.triggerHaptic([30, 40]);
     } else {
@@ -115,10 +184,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     }
   };
 
-  // Paso 2A: Login con Contraseña
+  // Paso 2A: Login con Contraseña Institucional (POST /login.ashx)
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessNotice(null);
     setLoading(true);
     BiometricsAdapter.triggerHaptic(40);
 
@@ -126,56 +196,62 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
     setLoading(false);
 
     if (result.success && result.student) {
-      setSuccessNotice(`Bienvenido, ${result.student.nombreCorto || result.student.nombre}`);
+      setSuccessNotice(`Bienvenido(a), ${result.student.nombreCorto || result.student.nombre}`);
       BiometricsAdapter.triggerHaptic([40, 50, 60]);
-      setTimeout(() => onLoginSuccess(result.student), 400);
+      setTimeout(() => onLoginSuccess(result.student!), 400);
     } else {
       setErrorMsg(result.message);
       BiometricsAdapter.triggerHaptic([80, 50, 80]);
     }
   };
 
-  // Paso 2B: Manejo de PIN (Entrada Dual: Teclado Físico + Teclado Numérico Táctil con Háptica)
-  const handlePinDigit = (digit: string) => {
-    if (pin.length < 6) {
-      BiometricsAdapter.triggerHaptic(25);
-      const newPin = pin + digit;
-      setPin(newPin);
-      setErrorMsg(null);
-      // Auto-submit si alcanza 4 dígitos
-      if (newPin.length === 4) {
-        setTimeout(() => triggerPinLogin(newPin), 250);
-      }
-    }
-  };
-
-  const handlePinBackspace = () => {
-    BiometricsAdapter.triggerHaptic(20);
-    setPin((prev) => prev.slice(0, -1));
-    setErrorMsg(null);
-  };
-
+  // Paso 2B: Ejecución segura del login con NIP institucional (sin colisiones ni estados obsoletos)
   const triggerPinLogin = async (pinValue: string) => {
-    setLoading(true);
-    const result = await AuthService.authenticatePin(matricula, pinValue);
-    setLoading(false);
+    if (isSubmittingPinRef.current || loading) return;
+    if (pinSubmitTimeoutRef.current) {
+      clearTimeout(pinSubmitTimeoutRef.current);
+      pinSubmitTimeoutRef.current = null;
+    }
 
-    if (result.success && result.student) {
-      setSuccessNotice(`Bienvenido, ${result.student.nombreCorto || result.student.nombre}`);
-      BiometricsAdapter.triggerHaptic([30, 50, 40]);
-      setTimeout(() => onLoginSuccess(result.student), 400);
-    } else {
-      setErrorMsg(result.message);
+    const cleanPin = (pinValue || pinRef.current).trim();
+    if (!cleanPin || cleanPin.length !== 4) {
+      setErrorMsg('Ingresa los 4 dígitos de tu NIP institucional.');
+      return;
+    }
+
+    isSubmittingPinRef.current = true;
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      const result = await AuthService.authenticatePin(matricula, cleanPin);
+      if (result.success && result.student) {
+        setSuccessNotice(`Bienvenido(a), ${result.student.nombreCorto || result.student.nombre}`);
+        BiometricsAdapter.triggerHaptic([30, 50, 40]);
+        setTimeout(() => onLoginSuccess(result.student!), 350);
+      } else {
+        setErrorMsg(result.message);
+        setPin('');
+        pinRef.current = '';
+        BiometricsAdapter.triggerHaptic([80, 40, 80]);
+        setTimeout(() => pinInputRef.current?.focus(), 80);
+      }
+    } catch (err: any) {
+      setErrorMsg('Error de comunicación al verificar NIP: ' + (err.message || ''));
       setPin('');
-      BiometricsAdapter.triggerHaptic([80, 40, 80]);
+      pinRef.current = '';
+    } finally {
+      setLoading(false);
+      isSubmittingPinRef.current = false;
     }
   };
 
   const handlePinSubmit = () => {
-    if (pin.length >= 4) {
-      triggerPinLogin(pin);
+    if (pinRef.current.length === 4) {
+      triggerPinLogin(pinRef.current);
     } else {
-      setErrorMsg('Ingresa los 4 dígitos de tu PIN institucional.');
+      setErrorMsg('Ingresa los 4 dígitos de tu NIP institucional.');
+      pinInputRef.current?.focus();
     }
   };
 
@@ -314,6 +390,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     BiometricsAdapter.triggerHaptic(20);
                     setStep('verify');
                     setPassword('');
+                    setPin('');
+                    pinRef.current = '';
+                    AuthService.clearLockout();
                     setErrorMsg(null);
                   }}
                   className="text-xs text-[#012d1d] hover:underline font-semibold flex items-center gap-1 shrink-0 p-1"
@@ -323,47 +402,43 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                 </button>
               </div>
 
-              {/* Selector de Método según registeredMethods */}
+              {/* Selector de Método: Contraseña O NIP */}
               <div className="flex border-b border-gray-200">
-                {studentInfo.registeredMethods.includes('password') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      BiometricsAdapter.triggerHaptic(20);
-                      setActiveMethod('password');
-                      setErrorMsg(null);
-                    }}
-                    className={`flex-1 py-2 text-xs font-semibold border-b-2 text-center transition flex items-center justify-center gap-1 ${
-                      activeMethod === 'password'
-                        ? 'border-[#012d1d] text-[#012d1d]'
-                        : 'border-transparent text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Contraseña</span>
-                  </button>
-                )}
-                {studentInfo.registeredMethods.includes('pin') && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      BiometricsAdapter.triggerHaptic(20);
-                      setActiveMethod('pin');
-                      setErrorMsg(null);
-                    }}
-                    className={`flex-1 py-2 text-xs font-semibold border-b-2 text-center transition flex items-center justify-center gap-1 ${
-                      activeMethod === 'pin'
-                        ? 'border-[#012d1d] text-[#012d1d]'
-                        : 'border-transparent text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>PIN (4 dígitos)</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    BiometricsAdapter.triggerHaptic(20);
+                    setActiveMethod('password');
+                    setErrorMsg(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-semibold border-b-2 text-center transition flex items-center justify-center gap-1 ${
+                    activeMethod === 'password'
+                      ? 'border-[#012d1d] text-[#012d1d]'
+                      : 'border-transparent text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Contraseña</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    BiometricsAdapter.triggerHaptic(20);
+                    setActiveMethod('pin');
+                    setErrorMsg(null);
+                  }}
+                  className={`flex-1 py-2 text-xs font-semibold border-b-2 text-center transition flex items-center justify-center gap-1 ${
+                    activeMethod === 'pin'
+                      ? 'border-[#012d1d] text-[#012d1d]'
+                      : 'border-transparent text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>NIP (4 dígitos)</span>
+                </button>
               </div>
 
-              {/* Subformulario: Contraseña */}
+              {/* Subformulario: Exclusivamente Contraseña */}
               {activeMethod === 'password' && (
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="space-y-1.5">
@@ -394,38 +469,58 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3.5 bg-[#012d1d] hover:bg-[#1b4332] text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#012d1d] hover:bg-[#1b4332] text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
                   >
                     <Lock className="w-4 h-4" />
-                    <span>{loading ? 'Validando con SIIA TESChi...' : 'Iniciar Sesión'}</span>
+                    <span>{loading ? 'Validando con SIIA TESChi...' : 'Iniciar Sesión con Contraseña'}</span>
                   </button>
                 </form>
               )}
 
-              {/* Subformulario: PIN Institucional (Entrada Dual) */}
+              {/* Subformulario: Exclusivamente NIP (4 dígitos) */}
               {activeMethod === 'pin' && (
                 <div className="space-y-4">
                   <div className="text-center space-y-2">
                     <p className="text-xs text-gray-600">
-                      Introduce tu PIN de 4 dígitos (táctil o teclado físico)
+                      Introduce tu NIP de 4 dígitos (teclado físico o táctil)
                     </p>
-                    {/* Visualizador de Dígitos */}
-                    <div className="flex justify-center gap-3 py-2">
-                      {[0, 1, 2, 3].map((idx) => {
-                        const hasVal = pin.length > idx;
-                        return (
-                          <div
-                            key={idx}
-                            className={`w-11 h-12 rounded-xl border-2 flex items-center justify-center text-lg font-mono font-bold transition ${
-                              hasVal
-                                ? 'border-[#012d1d] bg-[#012d1d] text-white shadow-xs'
-                                : 'border-gray-300 bg-[#f8f9fa] text-gray-400'
-                            }`}
-                          >
-                            {hasVal ? '•' : ''}
-                          </div>
-                        );
-                      })}
+                    {/* Visualizador de Dígitos con Input Invisible Accesible */}
+                    <div
+                      className="relative cursor-pointer max-w-[240px] mx-auto py-1"
+                      onClick={() => pinInputRef.current?.focus()}
+                    >
+                      <input
+                        ref={pinInputRef}
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={4}
+                        value={pin}
+                        onChange={(e) => updatePin(e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        autoComplete="one-time-code"
+                        aria-label="NIP institucional de 4 dígitos"
+                      />
+                      <div className="flex justify-center gap-3">
+                        {[0, 1, 2, 3].map((idx) => {
+                          const hasVal = pin.length > idx;
+                          const isCurrent = pin.length === idx;
+                          return (
+                            <div
+                              key={idx}
+                              className={`w-11 h-12 rounded-xl border-2 flex items-center justify-center text-lg font-mono font-bold transition-all duration-150 ${
+                                hasVal
+                                  ? 'border-[#012d1d] bg-[#012d1d] text-white shadow-xs scale-102'
+                                  : isCurrent
+                                  ? 'border-[#012d1d] ring-2 ring-[#012d1d]/20 bg-white text-gray-400'
+                                  : 'border-gray-300 bg-[#f8f9fa] text-gray-400'
+                              }`}
+                            >
+                              {hasVal ? '•' : ''}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
@@ -436,7 +531,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                         key={digit}
                         type="button"
                         onClick={() => handlePinDigit(digit)}
-                        className="h-12 rounded-xl bg-[#f0f3f1] hover:bg-[#aeeecb]/30 active:scale-95 text-base font-bold text-[#191c1d] transition flex items-center justify-center shadow-xs"
+                        disabled={loading}
+                        className="h-12 rounded-xl bg-[#f0f3f1] hover:bg-[#aeeecb]/30 active:scale-95 text-base font-bold text-[#191c1d] transition flex items-center justify-center shadow-xs disabled:opacity-50"
                       >
                         {digit}
                       </button>
@@ -444,7 +540,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <button
                       type="button"
                       onClick={handlePinBackspace}
-                      className="h-12 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-600 transition flex items-center justify-center"
+                      disabled={loading || pin.length === 0}
+                      className="h-12 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-600 transition flex items-center justify-center disabled:opacity-40"
                       title="Borrar dígito"
                     >
                       <Delete className="w-5 h-5" />
@@ -452,7 +549,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                     <button
                       type="button"
                       onClick={() => handlePinDigit('0')}
-                      className="h-12 rounded-xl bg-[#f0f3f1] hover:bg-[#aeeecb]/30 active:scale-95 text-base font-bold text-[#191c1d] transition flex items-center justify-center shadow-xs"
+                      disabled={loading}
+                      className="h-12 rounded-xl bg-[#f0f3f1] hover:bg-[#aeeecb]/30 active:scale-95 text-base font-bold text-[#191c1d] transition flex items-center justify-center shadow-xs disabled:opacity-50"
                     >
                       0
                     </button>
@@ -460,8 +558,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                       type="button"
                       onClick={handlePinSubmit}
                       disabled={pin.length < 4 || loading}
-                      className="h-12 rounded-xl bg-[#012d1d] disabled:opacity-40 text-white font-bold transition flex items-center justify-center"
-                      title="Confirmar PIN"
+                      className="h-12 rounded-xl bg-[#012d1d] hover:bg-[#1b4332] active:scale-95 disabled:opacity-40 text-white font-bold transition flex items-center justify-center shadow-sm"
+                      title="Confirmar NIP"
                     >
                       <ArrowRight className="w-5 h-5" />
                     </button>
