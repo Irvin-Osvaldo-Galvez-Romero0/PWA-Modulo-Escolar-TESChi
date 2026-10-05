@@ -222,12 +222,23 @@ flowchart TD
 
 ---
 
-## 7. 🎨 DISEÑO, UI/UX Y ESTÉTICA PREMIUM
-*(Skills base: `agency-ui-designer`, `agency-ux-architect`, `frontend-design`, `ecc-agent-a11y-architect`, `frontend-ui-engineering`, `agency-accessibility-auditor`)*
+## 7. 🎨 DISEÑO, UI/UX Y ESTÉTICA PREMIUM (FRAMEWORK TASTE & EMIL KOWALSKI CRAFT)
+*(Skills base: `agency-ui-designer`, `agency-ux-architect`, `frontend-design`, `ecc-agent-a11y-architect`, `frontend-ui-engineering`, `agency-accessibility-auditor`, `emil-design-eng`, `animate`, `review-animations`, `improve-animations`, `apple-design`, `mobile-native`, `break-ui`, `ask-sonner`, `design-taste-frontend`, `high-end-visual-design`, `gpt-taste`, `industrial-brutalist-ui`, `minimalist-ui`, `redesign-existing-projects`, `web-design-guidelines`, `vercel-composition-patterns`, `vercel-react-view-transitions`)*
 
-1. **Experiencia Wow:** Rechaza interfaces genéricas, grises o tipo plantilla por defecto. Aplica paletas cromáticas armónicas (HSL adaptativo), modos oscuros elegantes y tipografías modernas.
-2. **Micro-Animaciones & Interactividad:** Transiciones fluidas, feedback visual inmediato en estados de carga, error y éxito.
-3. **Accesibilidad Universal (WCAG 2.2 AA/AAA con ECC):** Estructura semántica HTML5, contraste suficiente de colores, navegación por teclado y soporte para lectores de pantalla validado con `ecc-agent-a11y-architect`.
+1. **Experiencia Wow & Anti-Generic Bar (Leonxlnx Taste Suite):**
+   - Rechaza enérgicamente interfaces genéricas, grises o tipo plantilla por defecto ("AI Slop"). Aplica los estándares de `high-end-visual-design` y `design-taste-frontend`: paletas cromáticas armónicas (HSL adaptativo), tipografías modernas no predeterminadas, jerarquía visual calibrada y contrastes asimétricos intencionales.
+   - Para estéticas técnicas e institucionales, recurre a `industrial-brutalist-ui` o `minimalist-ui` (composiciones bento limpias, rejillas rígidas y micro-detalles utilitarios).
+
+2. **Ingeniería de Diseño, Animaciones & Micro-Interacciones (Emil Kowalski Craft):**
+   - Sigue los principios de `emil-design-eng` y `apple-design` para movimiento físico natural (resortes, amortiguación, transiciones con salida fluida y retroalimentación táctil).
+   - Diseña e implementa animaciones con `animate`, audita y valida con `review-animations` y busca oportunidades de dinamismo con `find-animation-opportunities`.
+   - Adopta `mobile-native` para optimizar la experiencia móvil en PWAs: eliminación de lag al pulsar (tap delay), prevención de zoom indeseado en inputs, adaptación al notch y cálculo preciso de viewport (`dvh`/`svh` en lugar del bug clásico de `100vh`).
+   - Somete las interfaces a pruebas de estrés con `break-ui` para evaluar tolerancia ante textos excesivamente largos, valores numéricos extremos o datos nulos.
+
+3. **Patrones de Composición & Estándares Web (Vercel Labs Suite):**
+   - Aplica `vercel-composition-patterns` para estructurar componentes React 19 desacoplados, evitando la proliferación desordenada de boolean props en favor de componentes compuestos y providers puros.
+   - Emplea `vercel-react-view-transitions` para animaciones nativas de enrutamiento y transiciones de estado compartidas sin sobrecargar librerías externas.
+   - Cumple con las directivas de `web-design-guidelines` en cuanto a usabilidad, layout y accesibilidad universal (WCAG 2.2 AA/AAA con `ecc-agent-a11y-architect`).
 
 ---
 
@@ -283,8 +294,10 @@ Al culminar cualquier tarea significativa:
 | **Arquitectura & Sistema** | `ecc-agent-architect`, `ecc-agent-code-architect` | `agency-backend-architect`, `agency-solution-engineer` | `spec-driven-development`, `api-and-interface-design` | `residuality-theory`, `hexagonal-architecture` |
 | **Código, Diffs & Refactor** | `ecc-agent-code-simplifier`, `ecc-agent-code-reviewer` | `agency-senior-developer`, `agency-minimal-change-engineer` | `osmani-code-reviewer`, `code-simplification` | `ponytail`, `caveman`, `context-engineering` |
 | **Pruebas & Calidad (TDD)** | `ecc-agent-tdd-guide`, `ecc-agent-pr-test-analyzer` | `agency-test-automation-engineer`, `agency-reality-checker` | `osmani-test-engineer`, `test-driven-development` | `verification-loop`, `eval-harness`, `browser-testing-with-devtools` |
-| **Frontend & Web Performance** | `ecc-agent-react-reviewer`, `ecc-agent-a11y-architect` | `agency-frontend-developer`, `agency-ui-designer` | `osmani-web-performance-auditor`, `performance-optimization` | `frontend-ui-engineering`, `core-web-vitals` |
+| **Frontend & Web Performance** | `ecc-agent-react-reviewer`, `ecc-agent-a11y-architect` | `agency-frontend-developer`, `agency-ui-designer` | `osmani-web-performance-auditor`, `performance-optimization` | `frontend-ui-engineering`, `core-web-vitals`, `vercel-react-best-practices`, `vercel-composition-patterns` |
+| **UI/UX, Taste & Animaciones** | `ecc-agent-a11y-architect` | `agency-ui-designer`, `agency-ux-architect` | `web-design-guidelines` | `design-taste-frontend`, `high-end-visual-design`, `emil-design-eng`, `animate`, `mobile-native`, `break-ui` |
 | **Seguridad & AppSec** | `ecc-agent-security-reviewer`, `ecc-agent-silent-failure-hunter` | `agency-application-security-engineer`, `agency-penetration-tester` | `osmani-security-auditor`, `security-and-hardening` | `find-security-vulnerabilities-in-code`, `ci-security-scanning-with-strix`, `fix-security-vulnerabilities-with-strix`, `owasp-top-10-testing` |
 | **Build & Errores de Runtime** | `ecc-agent-build-error-resolver`, `ecc-agent-react-build-resolver` | `agency-devops-automator`, `agency-sre-site-reliability-engineer` | `debugging-and-error-recovery` | `terminal-ops`, `verification-loop` |
 | **Automatizaciones & Flujos** | `ecc-agent-loop-operator` | `agency-workflow-architect`, `agency-automation-governance-architect` | `ci-cd-and-automation` | `n8n-agents`, `n8n-workflow-patterns` |
-| **Gobernanza, Launch & Vault** | `ecc-agent-planner`, `ecc-agent-doc-updater` | `agency-senior-project-manager`, `agency-chief-of-staff` | `shipping-and-launch`, `documentation-and-adrs` | `second-brain-autolog`, `token-budget-advisor` |
+| **Gobernanza, Launch & Vault** | `ecc-agent-planner`, `ecc-agent-doc-updater` | `agency-senior-project-manager`, `agency-chief-of-staff` | `shipping-and-launch`, `documentation-and-adrs` | `second-brain-autolog`, `token-budget-advisor`, `deploy-to-vercel` |
+
